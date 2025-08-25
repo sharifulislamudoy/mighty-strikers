@@ -163,17 +163,17 @@ const HeroSection = () => {
                             variants={itemVariants}
                             className="text-xl md:text-2xl text-gray-300 mb-8"
                         >
-                            The most formidable cricket team that strikes with power, precision and passion
+                            Where Passion Meets Power!
                         </motion.p>
 
                         <motion.div
                             variants={itemVariants}
-                            className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                            className="flex  gap-4 justify-center lg:justify-start"
                         >
                             <motion.button
                                 whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(212, 175, 55, 0.5)" }}
                                 whileTap={{ scale: 0.95 }}
-                                className="bg-[#D4AF37] text-black font-bold py-3 px-8 rounded-full text-lg transition-all duration-300"
+                                className="bg-[#D4AF37] text-black font-bold py-1 px-8 rounded-full text-md transition-all duration-300"
                             >
                                 Meet The Team
                             </motion.button>
@@ -181,7 +181,7 @@ const HeroSection = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(255, 255, 255, 0.3)" }}
                                 whileTap={{ scale: 0.95 }}
-                                className="bg-transparent border-2 border-white text-white font-bold py-3 px-8 rounded-full text-lg transition-all duration-300"
+                                className="bg-transparent border-2 border-white text-white font-bold py-1 px-8 rounded-full text-md transition-all duration-300"
                             >
                                 Upcoming Matches
                             </motion.button>
@@ -189,7 +189,7 @@ const HeroSection = () => {
 
                         <motion.div
                             variants={itemVariants}
-                            className="mt-12 flex items-center justify-center lg:justify-start space-x-8"
+                            className="mt-8 flex items-center justify-center lg:justify-start space-x-8"
                         >
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-[#D4AF37]">24</div>
