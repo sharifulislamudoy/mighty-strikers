@@ -66,7 +66,6 @@ const Footer = () => {
         { name: 'Team', url: '#' },
         { name: 'Matches', url: '#' },
         { name: 'Gallery', url: '#' },
-        { name: 'News', url: '#' },
         { name: 'Contact', url: '#' },
     ];
 
