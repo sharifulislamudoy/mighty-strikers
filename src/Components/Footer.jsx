@@ -56,9 +56,7 @@ const Footer = () => {
 
     const socialLinks = [
         { name: 'Facebook', icon: '🇫', url: '#' },
-        { name: 'Twitter', icon: '🐦', url: '#' },
         { name: 'Instagram', icon: '📸', url: '#' },
-        { name: 'YouTube', icon: '▶️', url: '#' },
     ];
 
     const quickLinks = [
