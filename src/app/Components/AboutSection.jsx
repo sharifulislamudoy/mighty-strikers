@@ -107,27 +107,6 @@ const AboutSection = () => {
                                 coaching clinics and friendly matches with emerging teams.
                             </p>
 
-                            {/* Animated decorative element */}
-                            <motion.div
-                                className="mt-8 flex space-x-4"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.8, duration: 0.5 }}
-                            >
-                                {[2015, 2018, 2021, 2023].map((year, index) => (
-                                    <motion.div
-                                        key={index}
-                                        className="text-center"
-                                        whileHover={{ scale: 1.1, y: -5 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <div className="w-16 h-16 rounded-full bg-[#0A0A0A] border border-[#D4AF37] flex items-center justify-center text-[#D4AF37] font-bold">
-                                            {year}
-                                        </div>
-                                        <span className="text-white text-sm mt-2 block">Est.</span>
-                                    </motion.div>
-                                ))}
-                            </motion.div>
                         </motion.div>
 
                         {/* Right Column - Our Values */}
