@@ -3,14 +3,26 @@
 import { motion } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
 
 const HeroSection = () => {
     const constraintsRef = useRef(null);
     const [isClient, setIsClient] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         setIsClient(true);
     }, []);
+
+
+    const handleTeamNavigation = () => {
+        router.push('/team')
+    }
+
+    const handleMatchNavigation = () => {
+        router.push('matches')
+    }
 
     // Animation variants
     const containerVariants = {
@@ -171,6 +183,7 @@ const HeroSection = () => {
                             className="flex  gap-4 justify-center lg:justify-start"
                         >
                             <motion.button
+                                onClick={handleTeamNavigation}
                                 whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(212, 175, 55, 0.5)" }}
                                 whileTap={{ scale: 0.95 }}
                                 className="bg-[#D4AF37] text-black font-bold py-1 px-8 rounded-full text-md transition-all duration-300"
@@ -179,6 +192,7 @@ const HeroSection = () => {
                             </motion.button>
 
                             <motion.button
+                                onClick={handleMatchNavigation}
                                 whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(255, 255, 255, 0.3)" }}
                                 whileTap={{ scale: 0.95 }}
                                 className="bg-transparent border-2 border-white text-white font-bold py-1 px-8 rounded-full text-md transition-all duration-300"

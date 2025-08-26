@@ -190,40 +190,6 @@ const AboutSection = () => {
                             </motion.div>
                         </motion.div>
                     </div>
-
-                    {/* Achievements Preview */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={inView ? { opacity: 1, y: 0 } : {}}
-                        transition={{ delay: 0.5, duration: 0.7 }}
-                        className="mt-20 text-center"
-                    >
-                        <h3 className="text-2xl md:text-3xl font-bold text-white mb-12">Our Journey At A Glance</h3>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                            {[
-                                { value: "50+", label: "Matches Played" },
-                                { value: "3", label: "Tournaments Won" },
-                                { value: "15+", label: "Players Trained" },
-                                { value: "100%", label: "Passion" }
-                            ].map((stat, index) => (
-                                <motion.div
-                                    key={index}
-                                    className="p-6 bg-[#0A0A0A] border border-[#2A2A2A] rounded-2xl"
-                                    whileHover={{
-                                        y: -10,
-                                        boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)"
-                                    }}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                                    transition={{ delay: 0.7 + (index * 0.1), duration: 0.5 }}
-                                >
-                                    <div className="text-3xl md:text-4xl font-bold text-[#D4AF37] mb-2">{stat.value}</div>
-                                    <div className="text-gray-300">{stat.label}</div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
                 </div>
             </div>
         </section>
