@@ -3,15 +3,23 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const TeamPage = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(6); // Default for larger screens
 
     // Check screen size on mount and resize
     useEffect(() => {
-        const checkIsMobile = () => setIsMobile(window.innerWidth < 768);
+        const checkIsMobile = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            setItemsPerPage(mobile ? 3 : 6);
+        };
+        
         // Only run on client side to avoid hydration issues
         if (typeof window !== 'undefined') {
             checkIsMobile();
@@ -169,11 +177,113 @@ const TeamPage = () => {
             achievements: '100+ International Wickets',
             image: '/coach2.jpg'
         },
+        // Adding more members to demonstrate pagination
+        {
+            id: 9,
+            name: 'Daniel White',
+            role: 'Batsman',
+            category: 'batsmen',
+            battingStyle: 'Right Handed',
+            bowlingStyle: 'Right Arm Medium',
+            matches: 28,
+            runs: 1250,
+            wickets: 3,
+            image: '/player7.jpg'
+        },
+        {
+            id: 10,
+            name: 'Matthew Harris',
+            role: 'Bowler',
+            category: 'bowlers',
+            battingStyle: 'Left Handed',
+            bowlingStyle: 'Left Arm Spin',
+            matches: 35,
+            runs: 210,
+            wickets: 52,
+            image: '/player8.jpg'
+        },
+        {
+            id: 11,
+            name: 'Andrew Thompson',
+            role: 'All-Rounder',
+            category: 'allrounders',
+            battingStyle: 'Right Handed',
+            bowlingStyle: 'Right Arm Fast Medium',
+            matches: 41,
+            runs: 980,
+            wickets: 38,
+            image: '/player9.jpg'
+        },
+        {
+            id: 12,
+            name: 'Kevin Martin',
+            role: 'Fielding Coach',
+            category: 'staff',
+            specialty: 'Fielding Specialist',
+            experience: '10 years',
+            achievements: 'National Fielding Award Winner',
+            image: '/coach3.jpg'
+        },
     ];
 
     const filteredMembers = activeCategory === 'all'
         ? teamMembers
         : teamMembers.filter(member => member.category === activeCategory);
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedMembers = filteredMembers.slice(startIndex, startIndex + itemsPerPage);
+
+    // Reset to first page when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeCategory]);
+
+    // Pagination controls component
+    const PaginationControls = () => {
+        if (totalPages <= 1) return null;
+
+        const pageNumbers = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(i);
+        }
+
+        return (
+            <div className="flex justify-center mt-8">
+                <div className="flex items-center space-x-2">
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 rounded-md bg-[#1a1a1a] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    
+                    {pageNumbers.map(number => (
+                        <button
+                            key={number}
+                            onClick={() => setCurrentPage(number)}
+                            className={`w-8 h-8 rounded-md ${currentPage === number 
+                                ? 'bg-[#D4AF37] text-black font-bold' 
+                                : 'bg-[#1a1a1a] text-white hover:bg-[#2a2a2a]'
+                            }`}
+                        >
+                            {number}
+                        </button>
+                    ))}
+                    
+                    <button
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 rounded-md bg-[#1a1a1a] text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className='min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white'>
@@ -260,7 +370,6 @@ const TeamPage = () => {
                                     transition={{ duration: 0.3 }}
                                     className={`md:sticky md:top-28 md:h-fit ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 bg-[#0A0A0A] p-6 overflow-y-auto' : 'md:w-1/4'}`}
                                 >
-                                    {/* Close button for mobile */}
 
                                     <motion.div
                                         variants={containerVariants}
@@ -282,8 +391,8 @@ const TeamPage = () => {
                                                         if (isMobile) setIsFilterOpen(false);
                                                     }}
                                                     className={`w-full text-left py-3 px-4 rounded-lg transition-all duration-300 ${activeCategory === category.id
-                                                            ? 'bg-[#D4AF37] text-black font-bold'
-                                                            : 'bg-[#1a1a1a] text-white hover:bg-[#2a2a2a]'
+                                                        ? 'bg-[#D4AF37] text-black font-bold'
+                                                        : 'bg-[#1a1a1a] text-white hover:bg-[#2a2a2a]'
                                                         }`}
                                                     whileHover={{ x: 5 }}
                                                 >
@@ -293,7 +402,7 @@ const TeamPage = () => {
                                         </div>
 
                                         {/* Team Stats in sidebar for desktop */}
-                                        {!isMobile && (
+                                        {/* {!isMobile && (
                                             <motion.div
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
@@ -320,7 +429,7 @@ const TeamPage = () => {
                                                     </div>
                                                 </div>
                                             </motion.div>
-                                        )}
+                                        )} */}
                                     </motion.div>
                                 </motion.div>
                             )}
@@ -345,7 +454,7 @@ const TeamPage = () => {
                                 animate="visible"
                                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
                             >
-                                {filteredMembers.map((member, index) => (
+                                {paginatedMembers.map((member, index) => (
                                     <motion.div
                                         key={member.id}
                                         variants={itemVariants}
@@ -390,7 +499,7 @@ const TeamPage = () => {
                                                             <p className="font-bold text-sm">{member.battingStyle}</p>
                                                         </div>
                                                     </div>
-                                                    <div className="bg-[#0A0A0A] p-3 rounded-lg">
+                                                    <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
                                                         <p className="text-gray-400 text-sm">Bowling</p>
                                                         <p className="font-medium">{member.bowlingStyle}</p>
                                                     </div>
@@ -405,16 +514,30 @@ const TeamPage = () => {
                                                         <p className="text-gray-400 text-sm">Experience</p>
                                                         <p className="font-bold">{member.experience}</p>
                                                     </div>
-                                                    <div className="bg-[#0A0A0A] p-3 rounded-lg">
+                                                    <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
                                                         <p className="text-gray-400 text-sm">Achievements</p>
                                                         <p className="font-medium">{member.achievements}</p>
                                                     </div>
                                                 </>
                                             )}
+
+                                            {/* View Details Button */}
+                                            <Link href={`/team/${member.id}`} passHref>
+                                                <motion.button
+                                                    className="w-full bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg"
+                                                    whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(212, 175, 55, 0.4)" }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                >
+                                                    View Details
+                                                </motion.button>
+                                            </Link>
                                         </div>
                                     </motion.div>
                                 ))}
                             </motion.div>
+
+                            {/* Pagination Controls */}
+                            <PaginationControls />
 
                             {/* Team Stats Section - Full width on all devices */}
                             <motion.div
@@ -459,27 +582,6 @@ const TeamPage = () => {
                                         <div className="text-gray-400 mt-2">Total Runs</div>
                                     </motion.div>
                                 </div>
-                            </motion.div>
-
-                            {/* Join Team CTA - Full width on all devices */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.7 }}
-                                viewport={{ once: true }}
-                                className="mt-12 text-center"
-                            >
-                                <h2 className="text-3xl font-bold mb-6">Want to Join Our Team?</h2>
-                                <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-                                    We're always looking for talented players who share our passion for cricket and team spirit.
-                                </p>
-                                <motion.button
-                                    whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(212, 175, 55, 0.5)" }}
-                                    whileTap={{ scale: 0.95 }}
-                                    className="bg-[#D4AF37] text-black font-bold py-3 px-8 rounded-full text-lg transition-all duration-300"
-                                >
-                                    Apply Now
-                                </motion.button>
                             </motion.div>
                         </div>
                     </div>

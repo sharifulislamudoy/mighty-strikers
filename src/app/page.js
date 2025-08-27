@@ -3,7 +3,6 @@ import HeroSection from "./Components/HeroSection";
 import AboutSection from "./Components/AboutSection";
 import PerformanceAnalytics from "./Components/PerformanceAnalytics";
 import FounderSection from "./Components/FounderSection";
-import CommunityImpact from "./Components/CommunityImpact";
 
 export default function Home() {
   return (
@@ -12,7 +11,6 @@ export default function Home() {
       <AboutSection />
       <FounderSection />
       <PerformanceAnalytics />
-      <CommunityImpact />
     </div>
   );
 }
