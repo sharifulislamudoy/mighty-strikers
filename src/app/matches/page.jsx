@@ -9,19 +9,24 @@ const MatchPage = () => {
     const [selectedMatch, setSelectedMatch] = useState(null);
     const [isMobile, setIsMobile] = useState(false);
 
+
     // Check screen size
     useEffect(() => {
-        const checkIsMobile = () => setIsMobile(window.innerWidth < 768);
-        if (typeof window !== 'undefined') {
-            checkIsMobile();
-            window.addEventListener('resize', checkIsMobile);
-        }
-        return () => {
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('resize', checkIsMobile);
-            }
+        const checkIsMobile = () => {
+            setIsMobile(window.innerWidth < 768);
         };
-    }, []);
+
+        // Check immediately on mount
+        checkIsMobile();
+
+        // Add event listener for resize
+        window.addEventListener('resize', checkIsMobile);
+
+        // Cleanup function
+        return () => {
+            window.removeEventListener('resize', checkIsMobile);
+        };
+    }, []); // Empty dependency array ensures this runs only once on mount
 
     // Predefined particle positions
     const particlePositions = useMemo(() => [
@@ -222,7 +227,7 @@ const MatchPage = () => {
     // Get border color based on match result
     const getBorderColor = (match) => {
         if (match.status === "Upcoming") return "border-[#D4AF37]";
-        
+
         if (match.team1.name === "Mighty Strikers") {
             return match.team1.result === "won" ? "border-green-500" : "border-red-500";
         } else {
@@ -233,7 +238,7 @@ const MatchPage = () => {
     // Get result text for completed matches
     const getResultText = (match) => {
         if (match.status === "Upcoming") return null;
-        
+
         if (match.team1.name === "Mighty Strikers") {
             return match.team1.result === "won" ? "Won by " + (parseInt(match.team1.score.split('/')[0]) - parseInt(match.team2.score.split('/')[0])) + " runs" : "Lost by " + (10 - parseInt(match.team2.score.split('/')[1])) + " wickets";
         } else {
@@ -252,12 +257,14 @@ const MatchPage = () => {
                         initial={{ width: 0, height: 0 }}
                         animate={{ width: 600, height: 600 }}
                         transition={{ duration: 2 }}
+                        variants={containerVariants}
                     />
                     <motion.div
                         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#D4AF37] opacity-10"
                         initial={{ width: 0, height: 0 }}
                         animate={{ width: 400, height: 400 }}
                         transition={{ duration: 2, delay: 0.3 }}
+                        variants={containerVariants}
                     />
 
                     {/* Floating particles */}
@@ -290,6 +297,7 @@ const MatchPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.7 }}
                         className="text-center mb-8"
+                        variants={containerVariants}
                     >
                         <h1 className="text-3xl md:text-5xl font-bold mb-4">
                             <span className="text-white">Match </span>
@@ -300,10 +308,33 @@ const MatchPage = () => {
                         </p>
                     </motion.div>
 
+                    {/* Play Friendly Match Button */}
+                    <motion.div
+                        className="flex justify-center mb-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                        variants={containerVariants}
+                    >
+                        <a
+                            href="https://m.me/mightystrikers1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] text-black font-bold py-3 px-8 rounded-full flex items-center gap-2 hover:shadow-lg hover:shadow-[#D4AF37]/30 transition-all duration-300"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                            </svg>
+                            Play Friendly Match With Us
+                        </a>
+                    </motion.div>
+
+
                     {/* Navigation Tabs */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
+                        variants={containerVariants}
                         transition={{ duration: 0.5, delay: 0.2 }}
                         className="flex border-b border-[#2a2a2a] mb-8 justify-center"
                     >
@@ -381,6 +412,7 @@ const MatchPage = () => {
                             {activeTab === 'completed' && (
                                 <motion.div
                                     key="completed"
+                                    variants={containerVariants}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
@@ -444,6 +476,7 @@ const MatchPage = () => {
                     {/* Statistics Section */}
                     <motion.div
                         initial={{ opacity: 0 }}
+                        variants={containerVariants}
                         whileInView={{ opacity: 1 }}
                         transition={{ duration: 0.7 }}
                         viewport={{ once: true }}

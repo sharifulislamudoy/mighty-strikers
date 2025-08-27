@@ -8,7 +8,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,6 +31,9 @@ const Navbar = () => {
     { name: 'Matches', path: '/matches' },
     { name: 'Gallery', path: '/gallery' },
   ];
+
+  // Check if current path is the auth form
+  const isAuthForm = pathname === '/auth-form';
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -82,19 +90,24 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* CTA Button - Right Side (Desktop) */}
+        {/* CTA Button - Right Side (Desktop) - Conditionally rendered */}
         <div className="hidden lg:block">
-          <motion.button
-            whileHover={{ 
-              scale: 1.05,
-              backgroundColor: "#f0c22c",
-              color: "#000"
-            }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-[#f0c22c] text-black font-bold py-2 px-6 rounded-full text-sm transition-all duration-300 border border-[#D4AF37] shadow-lg"
-          >
-            Join The Club
-          </motion.button>
+          {isMounted && !isAuthForm ? (
+            <motion.a
+              whileHover={{ 
+                scale: 1.05,
+                backgroundColor: "#f0c22c",
+                color: "#000"
+              }}
+              href='/auth-form'
+              whileTap={{ scale: 0.95 }}
+              className="bg-[#f0c22c] text-black font-bold py-2 px-6 rounded-full text-sm transition-all duration-300 border border-[#D4AF37] shadow-lg"
+            >
+              Join Our Team
+            </motion.a>
+          ) : (
+            <div className="w-32 h-10"></div>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -155,16 +168,21 @@ const Navbar = () => {
                     </Link>
                   </motion.div>
                 ))}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
-                  className="pt-4"
-                >
-                  <button className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg">
-                    Join The Club
-                  </button>
-                </motion.div>
+                {/* Conditionally render the Join button in mobile menu */}
+                {isMounted && !isAuthForm ? (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                    className="pt-4"
+                  >
+                    <button className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg">
+                      Join Our Team
+                    </button>
+                  </motion.div>
+                ) : (
+                  <div className="h-16"></div> 
+                )}
               </div>
             </div>
           </motion.div>

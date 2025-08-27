@@ -10,7 +10,7 @@ const TeamPage = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(6); // Default for larger screens
+    const [itemsPerPage, setItemsPerPage] = useState(6);
 
     // Check screen size on mount and resize
     useEffect(() => {
@@ -400,36 +400,6 @@ const TeamPage = () => {
                                                 </motion.button>
                                             ))}
                                         </div>
-
-                                        {/* Team Stats in sidebar for desktop */}
-                                        {/* {!isMobile && (
-                                            <motion.div
-                                                initial={{ opacity: 0 }}
-                                                animate={{ opacity: 1 }}
-                                                transition={{ delay: 0.5 }}
-                                                className="mt-8 bg-gradient-to-r from-[#0A0A0A] to-[#1a1a1a] rounded-xl p-6 border border-[#2a2a2a]"
-                                            >
-                                                <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Team Stats</h3>
-                                                <div className="space-y-3">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Total Matches</span>
-                                                        <span className="font-bold">56</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Matches Won</span>
-                                                        <span className="font-bold text-green-400">42</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Tournaments</span>
-                                                        <span className="font-bold">8</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Total Runs</span>
-                                                        <span className="font-bold">12,580</span>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        )} */}
                                     </motion.div>
                                 </motion.div>
                             )}
@@ -538,51 +508,6 @@ const TeamPage = () => {
 
                             {/* Pagination Controls */}
                             <PaginationControls />
-
-                            {/* Team Stats Section - Full width on all devices */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                whileInView={{ opacity: 1 }}
-                                transition={{ duration: 0.8 }}
-                                viewport={{ once: true }}
-                                className="mt-12 bg-gradient-to-r from-[#0A0A0A] to-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]"
-                            >
-                                <h2 className="text-3xl font-bold mb-8 text-center text-[#D4AF37]">Team Statistics</h2>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                    <motion.div
-                                        className="text-center p-6 bg-black rounded-xl"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <div className="text-4xl font-bold text-[#D4AF37]">24</div>
-                                        <div className="text-gray-400 mt-2">Matches Won</div>
-                                    </motion.div>
-                                    <motion.div
-                                        className="text-center p-6 bg-black rounded-xl"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <div className="text-4xl font-bold text-[#D4AF37]">5</div>
-                                        <div className="text-gray-400 mt-2">Tournaments</div>
-                                    </motion.div>
-                                    <motion.div
-                                        className="text-center p-6 bg-black rounded-xl"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <div className="text-4xl font-bold text-[#D4AF37]">18</div>
-                                        <div className="text-gray-400 mt-2">Players</div>
-                                    </motion.div>
-                                    <motion.div
-                                        className="text-center p-6 bg-black rounded-xl"
-                                        whileHover={{ scale: 1.05 }}
-                                        transition={{ type: "spring", stiffness: 300 }}
-                                    >
-                                        <div className="text-4xl font-bold text-[#D4AF37]">2150</div>
-                                        <div className="text-gray-400 mt-2">Total Runs</div>
-                                    </motion.div>
-                                </div>
-                            </motion.div>
                         </div>
                     </div>
                 </div>
