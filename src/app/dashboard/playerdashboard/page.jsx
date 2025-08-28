@@ -239,7 +239,7 @@ const PlayerDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white overflow-hidden">
-            <div className='w-11/12 mx-auto mt-15 px-4'>
+            <div className='w-11/12 mx-auto mt-15 md:px-4'>
                 {/* Animated Background Elements */}
                 <div className="fixed inset-0 z-0 overflow-hidden">
                     {[...Array(15)].map((_, i) => (
