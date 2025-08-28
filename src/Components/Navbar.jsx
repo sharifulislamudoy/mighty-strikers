@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { signOut, useSession } from 'next-auth/react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     setIsMounted(true);
@@ -32,11 +35,19 @@ const Navbar = () => {
     { name: 'Gallery', path: '/gallery' },
   ];
 
-  // Check if current path is the auth form
   const isAuthForm = pathname === '/auth-form';
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const toggleUserMenu = () => {
+    setUserMenuOpen(!userMenuOpen);
+  };
+
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    setUserMenuOpen(false);
   };
 
   return (
@@ -90,9 +101,58 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* CTA Button - Right Side (Desktop) - Conditionally rendered */}
+        {/* Right Side - User Icon or Join Button */}
         <div className="hidden lg:block">
-          {isMounted && !isAuthForm ? (
+          {isMounted && status === 'authenticated' ? (
+            <div className="relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={toggleUserMenu}
+                className="w-10 h-10 rounded-full bg-[#f0c22c] flex items-center justify-center text-black font-bold"
+                aria-label="User menu"
+              >
+                {session.user?.name?.charAt(0) || session.user?.username?.charAt(0) || 'U'}
+              </motion.button>
+              
+              {/* User Menu Drawer */}
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-12 mt-2 w-48 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg shadow-xl py-1 z-50"
+                  >
+                    <div className="px-4 py-2 border-b border-[#2A2A2A]">
+                      <p className="text-white font-medium text-sm">
+                        {session.user?.name || session.user?.username}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {session.user?.role}
+                      </p>
+                    </div>
+                    
+                    <Link
+                      href="/dashboard/playerdashboard"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : isMounted && !isAuthForm ? (
             <motion.a
               whileHover={{ 
                 scale: 1.05,
@@ -168,8 +228,40 @@ const Navbar = () => {
                     </Link>
                   </motion.div>
                 ))}
-                {/* Conditionally render the Join button in mobile menu */}
-                {isMounted && !isAuthForm ? (
+                
+                {/* Mobile User Menu or Join Button */}
+                {status === 'authenticated' ? (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                    >
+                      <Link
+                        href="/dashboard/playerdashboard"
+                        onClick={() => setIsOpen(false)}
+                        className="block py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
+                      >
+                        Dashboard
+                      </Link>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: (navItems.length + 1) * 0.1 }}
+                    >
+                      <button
+                        onClick={() => {
+                          setIsOpen(false);
+                          handleLogout();
+                        }}
+                        className="block w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
+                      >
+                        Sign Out
+                      </button>
+                    </motion.div>
+                  </>
+                ) : isMounted && !isAuthForm ? (
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -177,8 +269,9 @@ const Navbar = () => {
                     className="pt-4"
                   >
                     <a
-                    href='/auth-form'
-                     className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg">
+                      href='/auth-form'
+                      className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg"
+                    >
                       Join Our Team
                     </a>
                   </motion.div>
@@ -190,6 +283,14 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Overlay for user menu */}
+      {userMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40"
+          onClick={() => setUserMenuOpen(false)}
+        />
+      )}
     </motion.nav>
   );
 };

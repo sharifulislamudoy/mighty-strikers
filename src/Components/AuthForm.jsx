@@ -130,7 +130,7 @@ const AuthForm = () => {
         // Show success toast for login
         toast.success('Login successful! Redirecting...');
 
-        // Redirect to dashboard after a short delay - FIXED PATH
+        // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/dashboard/playerdashboard');
         }, 1500);
@@ -151,9 +151,20 @@ const AuthForm = () => {
         }
 
         // Show success toast for registration
-        toast.success(`Registration successful! Your username is: ${result.username}. You can now login.`);
+        toast.success(`Registration successful! Your username is: ${result.username}. Logging you in...`);
 
-        // Reset form and switch to login
+        // After successful registration, automatically sign in the user
+        const signInResult = await signIn('credentials', {
+          redirect: false,
+          phone: formData.phone,
+          password: formData.password,
+        });
+
+        if (signInResult.error) {
+          throw new Error(signInResult.error);
+        }
+
+        // Reset form
         setFormData({
           name: '',
           phone: '',
@@ -168,7 +179,7 @@ const AuthForm = () => {
         });
         setPreviewUrl(null);
 
-        // Switch to login form after a short delay
+        // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/dashboard/playerdashboard');
         }, 1500);
