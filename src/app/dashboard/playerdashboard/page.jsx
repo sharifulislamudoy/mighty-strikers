@@ -326,7 +326,7 @@ const PlayerDashboard = () => {
                             variants={itemVariants}
                             className="lg:col-span-1 bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl border border-[#2a2a2a] shadow-lg overflow-hidden"
                         >
-                            <div className="relative h-48">
+                            <div className="relative h-72">
                                 <Image
                                     src={player.image || '/default-player.jpg'}
                                     alt={player.name}
