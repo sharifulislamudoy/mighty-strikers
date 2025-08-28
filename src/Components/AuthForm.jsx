@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
@@ -137,18 +136,18 @@ const AuthForm = () => {
       if (isLogin) {
         // Show success toast for login
         toast.success('Login successful! Redirecting...');
-        
+
         // Store user data
         localStorage.setItem('user', JSON.stringify(result.user));
-        
+
         // Redirect to dashboard after a short delay
         setTimeout(() => {
           router.push('/dashboard');
         }, 1500);
       } else {
         // Show success toast for registration
-        toast.success('Registration successful! You can now login.');
-        
+        toast.success(`Registration successful! Your username is: ${result.username}. You can now login.`);
+
         // Reset form and switch to login
         setFormData({
           name: '',
@@ -161,10 +160,9 @@ const AuthForm = () => {
           battingStyle: '',
           bowlingStyle: '',
           age: '',
-          role: ''
         });
         setPreviewUrl(null);
-        
+
         // Switch to login form after a short delay
         setTimeout(() => {
           setIsLogin(true);
@@ -206,7 +204,7 @@ const AuthForm = () => {
           },
         }}
       />
-      
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -428,8 +426,8 @@ const AuthForm = () => {
                         Preferred Role
                       </label>
                       <input
-                        id="role"
-                        name="role"
+                        id="category" // change from role
+                        name="category" // change from role
                         type="text"
                         value={formData.role}
                         onChange={handleInputChange}
@@ -438,7 +436,7 @@ const AuthForm = () => {
                       />
                     </div>
 
-                    
+
                     <div>
                       <label htmlFor="age" className="block text-sm font-medium text-gray-300 mb-2">
                         Age

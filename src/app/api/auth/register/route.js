@@ -12,23 +12,49 @@ export async function POST(request) {
       email,
       password,
       photo,
-      category,
+      category, // This contains the role data from the form (previously called category)
       specialties,
       battingStyle,
       bowlingStyle,
-      age,
-      role
+      age
     } = await request.json();
 
-    // Check if user already exists
+    // Generate username from name (convert to lowercase and replace spaces with hyphens)
+    const baseUsername = name.toLowerCase().replace(/\s+/g, '-');
+    let username = baseUsername;
+    let counter = 1;
+
+    // Check if user already exists with phone, email, or generated username
     const existingUser = await playersCollection.findOne({ 
-      $or: [{ phone }, { email: email || '' }] 
+      $or: [
+        { phone }, 
+        { email: email || '' }, 
+        { username: baseUsername }
+      ] 
     });
     
     if (existingUser) {
-      return Response.json({ 
-        message: 'User with this phone or email already exists' 
-      }, { status: 400 });
+      // If username already exists, find a unique one
+      if (existingUser.username === baseUsername) {
+        while (true) {
+          username = `${baseUsername}-${counter}`;
+          const userWithSameUsername = await playersCollection.findOne({ username });
+          
+          if (!userWithSameUsername) {
+            break;
+          }
+          counter++;
+        }
+      } else {
+        // If phone or email already exists
+        let conflictField = '';
+        if (existingUser.phone === phone) conflictField = 'phone number';
+        if (existingUser.email === email) conflictField = 'email';
+        
+        return Response.json({ 
+          message: `User with this ${conflictField} already exists` 
+        }, { status: 400 });
+      }
     }
 
     // Hash password
@@ -37,6 +63,7 @@ export async function POST(request) {
     // Create new player
     const result = await playersCollection.insertOne({
       name,
+      username,
       phone,
       email: email || '',
       password: hashedPassword,
@@ -46,14 +73,16 @@ export async function POST(request) {
       battingStyle,
       bowlingStyle,
       age: parseInt(age),
-      role,
+      role: 'player', // Always set role to 'player'
+      likes: 0, // Add likes field with initial value 0
       createdAt: new Date(),
       updatedAt: new Date()
     });
 
     return Response.json({ 
       message: 'Player registered successfully', 
-      playerId: result.insertedId 
+      playerId: result.insertedId,
+      username: username
     }, { status: 201 });
   } catch (error) {
     console.error('Registration error:', error);
