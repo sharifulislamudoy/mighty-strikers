@@ -176,9 +176,11 @@ const Navbar = () => {
                     transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
                     className="pt-4"
                   >
-                    <button className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg">
+                    <a
+                    href='/auth-form'
+                     className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg">
                       Join Our Team
-                    </button>
+                    </a>
                   </motion.div>
                 ) : (
                   <div className="h-16"></div> 

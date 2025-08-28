@@ -11,14 +11,14 @@ const teamMembers = [
     {
         id: 1,
         name: 'Alex Johnson',
-        role: 'Captain & Batsman',
-        category: 'batsmen',
+        category: 'Captain & Batsman',
         battingStyle: 'Right Handed',
         bowlingStyle: 'Right Arm Medium',
         matches: 45,
         runs: 2150,
         wickets: 12,
         average: 47.8,
+        economy: 7.2,
         strikeRate: 132.5,
         bestBowling: '3/28',
         age: 28,
@@ -32,8 +32,7 @@ const teamMembers = [
     {
         id: 2,
         name: 'James Wilson',
-        role: 'Vice Captain & Bowler',
-        category: 'bowlers',
+        category: 'Vice Captain & Bowler',
         battingStyle: 'Left Handed',
         bowlingStyle: 'Left Arm Fast',
         matches: 42,
@@ -248,7 +247,7 @@ const PlayerDetailsPage = () => {
                                 transition={{ delay: 0.5 }}
                             >
                                 <h1 className="text-3xl md:text-4xl font-bold">{player.name}</h1>
-                                <p className="text-xl text-[#D4AF37]">{player.role}</p>
+                                <p className="text-xl text-[#D4AF37]">{player.category}</p>
                             </motion.div>
                         </motion.div>
 
@@ -274,7 +273,7 @@ const PlayerDetailsPage = () => {
                                 </div>
                             </motion.div>
                         )}
-                        {/* Like Button Section - Replacing Bio */}
+                        {/* Like Button Section */}
                         <motion.div
                             variants={itemVariants}
                             className="my-8 p-6 bg-gradient-to-r from-[#1a1a1a] to-[#0A0A0A] rounded-2xl border border-[#2a2a2a] flex flex-col items-center"
@@ -306,15 +305,31 @@ const PlayerDetailsPage = () => {
                         variants={itemVariants}
                         className="lg:w-3/5"
                     >
+                        {/* Personal Information */}
+                        <motion.div
+                            variants={statItemVariants}
+                            className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg mb-6"
+                            whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
+                        >
+                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Personal Information</h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                    <span className="text-gray-400">Age</span>
+                                    <span className="font-bold">{player.age} years</span>
+                                </div>
+                                <div className="flex justify-between items-center py-2">
+                                    <span className="text-gray-400">Debut</span>
+                                    <span className="font-bold">{player.debut}</span>
+                                </div>
+                            </div>
+                        </motion.div>
 
                         {/* Player Stats */}
-                        <motion.div
-                            variants={containerVariants}
-                            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
-                        >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Batting Stats */}
                             <motion.div
                                 variants={statItemVariants}
-                                className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg"
+                                className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg h-full"
                                 whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
                             >
                                 <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Batting Stats</h3>
@@ -342,9 +357,10 @@ const PlayerDetailsPage = () => {
                                 </div>
                             </motion.div>
 
+                            {/* Bowling Stats */}
                             <motion.div
                                 variants={statItemVariants}
-                                className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg"
+                                className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg h-full"
                                 whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
                             >
                                 <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Bowling Stats</h3>
@@ -367,34 +383,7 @@ const PlayerDetailsPage = () => {
                                     </div>
                                 </div>
                             </motion.div>
-                        </motion.div>
-
-                        {/* Personal Info Section - Replacing Achievements */}
-                        <motion.div
-                            variants={statItemVariants}
-                            className="bg-gradient-to-b from-[#1a1a1a] mt-14 to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg"
-                            whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
-                        >
-                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Personal Information</h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                    <span className="text-gray-400">Age</span>
-                                    <span className="font-bold">{player.age} years</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                    <span className="text-gray-400">Debut</span>
-                                    <span className="font-bold">{player.debut}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                    <span className="text-gray-400">Role</span>
-                                    <span className="font-bold">{player.role}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2">
-                                    <span className="text-gray-400">Category</span>
-                                    <span className="font-bold capitalize">{player.category}</span>
-                                </div>
-                            </div>
-                        </motion.div>
+                        </div>
                     </motion.div>
                 </motion.div>
             </div>
