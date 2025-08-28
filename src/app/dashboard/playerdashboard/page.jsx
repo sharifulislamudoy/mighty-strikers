@@ -348,6 +348,7 @@ const PlayerDashboard = () => {
                                                 </tbody>
                                             </table>
                                         </div>
+                                        
                                     </div>
                                 </motion.div>
                             </div>
