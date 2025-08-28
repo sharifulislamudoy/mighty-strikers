@@ -97,7 +97,7 @@ const PlayerDashboard = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white overflow-hidden">
-            <div className='w-11/12 mx-auto mt-20'>
+            <div className='w-11/12 mx-auto mt-15 px-4'>
                 {/* Animated Background Elements */}
                 <div className="fixed inset-0 z-0 overflow-hidden">
                     {[...Array(15)].map((_, i) => (
@@ -177,7 +177,21 @@ const PlayerDashboard = () => {
                                         <p className="font-bold">{player.debut}</p>
                                     </div>
                                 </div>
-                                <p className="text-gray-300 mb-4">{player.bio}</p>
+                                
+                                {/* Likes Display */}
+                                <div className="flex items-center justify-center mb-4 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                                    <div className="flex items-center">
+                                        <svg 
+                                            className="w-6 h-6 text-[#D4AF37] mr-2" 
+                                            fill="currentColor" 
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                                        </svg>
+                                        <span className="text-xl font-bold">{player.likes}</span>
+                                        <span className="ml-2 text-gray-400">Likes</span>
+                                    </div>
+                                </div>
 
                                 <div className="mb-4">
                                     <h3 className="text-[#D4AF37] font-bold mb-2">Specialties</h3>

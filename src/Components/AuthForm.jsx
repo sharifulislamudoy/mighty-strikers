@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { signIn, signUp } from 'next-auth/react';
 import toast, { Toaster } from 'react-hot-toast';
 
 const AuthForm = () => {
@@ -114,37 +115,41 @@ const AuthForm = () => {
         age: parseInt(formData.age)
       };
 
-      // Determine API endpoint based on form mode
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-
-      // Send data to backend
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(finalData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Something went wrong');
-      }
-
-      // Handle successful response
       if (isLogin) {
+        // Use NextAuth signIn for login
+        const result = await signIn('credentials', {
+          redirect: false,
+          phone: formData.phone,
+          password: formData.password,
+        });
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
         // Show success toast for login
         toast.success('Login successful! Redirecting...');
 
-        // Store user data
-        localStorage.setItem('user', JSON.stringify(result.user));
-
-        // Redirect to dashboard after a short delay
+        // Redirect to dashboard after a short delay - FIXED PATH
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/dashboard/playerdashboard');
         }, 1500);
       } else {
+        // Send registration data to your API
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(finalData),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || 'Something went wrong');
+        }
+
         // Show success toast for registration
         toast.success(`Registration successful! Your username is: ${result.username}. You can now login.`);
 
@@ -165,7 +170,7 @@ const AuthForm = () => {
 
         // Switch to login form after a short delay
         setTimeout(() => {
-          setIsLogin(true);
+          router.push('/dashboard/playerdashboard');
         }, 1500);
       }
     } catch (err) {
@@ -429,7 +434,7 @@ const AuthForm = () => {
                         id="category" // change from role
                         name="category" // change from role
                         type="text"
-                        value={formData.role}
+                        value={formData.category}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
                         placeholder="e.g. Captain & Batsman"
