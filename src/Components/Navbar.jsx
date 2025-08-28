@@ -47,8 +47,9 @@ const Navbar = () => {
   };
 
   const handleLogoutClick = () => {
+    setIsOpen(false); // Close mobile menu
+    setUserMenuOpen(false); // Close user menu
     setShowLogoutConfirm(true);
-    setUserMenuOpen(false);
   };
 
   const confirmLogout = async () => {
@@ -262,10 +263,7 @@ const Navbar = () => {
                         transition={{ duration: 0.3, delay: (navItems.length + 1) * 0.1 }}
                       >
                         <button
-                          onClick={() => {
-                            setIsOpen(false);
-                            handleLogoutClick();
-                          }}
+                          onClick={handleLogoutClick}
                           className="block w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
                         >
                           Sign Out
