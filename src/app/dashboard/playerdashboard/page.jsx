@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-// Animation variants
+// Animation variants (same as before)
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -44,9 +44,14 @@ const statItemVariants = {
 const PlayerDashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+    const [isEditing, setIsEditing] = useState(false);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [showImageUpload, setShowImageUpload] = useState(false);
+    const [tempImage, setTempImage] = useState('');
+    const [tempAge, setTempAge] = useState('');
 
-    // Player data
-    const player = {
+    // Player data with additional stats
+    const initialPlayerData = {
         id: 1,
         name: 'Alex Johnson',
         category: 'Captain & Batsman',
@@ -71,8 +76,17 @@ const PlayerDashboard = () => {
             { match: 'vs Strikers', runs: 105, balls: 58, wickets: 0, result: 'Won' },
             { match: 'vs Chargers', runs: 35, balls: 22, wickets: 2, result: 'Won' },
             { match: 'vs Royals', runs: 81, balls: 47, wickets: 0, result: 'Won' },
-        ]
+        ],
+        // New stats
+        halfCenturies: 15,
+        centuries: 3,
+        thirties: 22,
+        threeWickets: 2,
+        fiveWickets: 0,
+        maidens: 5
     };
+
+    const [player, setPlayer] = useState(initialPlayerData);
 
     useEffect(() => {
         // Simulate loading
@@ -82,6 +96,134 @@ const PlayerDashboard = () => {
 
         return () => clearTimeout(timer);
     }, []);
+
+    const handleIncrement = (stat, isBatting = true) => {
+        if (!isEditing) return;
+
+        setPlayer(prev => {
+            let updatedPlayer = { ...prev };
+
+            if (isBatting) {
+                switch (stat) {
+                    case 'matches':
+                        updatedPlayer.matches += 1;
+                        // Auto-calculate average
+                        updatedPlayer.average = parseFloat((updatedPlayer.runs / updatedPlayer.matches).toFixed(2));
+                        break;
+                    case 'runs':
+                        updatedPlayer.runs += 1;
+                        // Auto-calculate average
+                        updatedPlayer.average = parseFloat((updatedPlayer.runs / updatedPlayer.matches).toFixed(2));
+                        break;
+                    case 'halfCenturies':
+                        updatedPlayer.halfCenturies += 1;
+                        break;
+                    case 'centuries':
+                        updatedPlayer.centuries += 1;
+                        break;
+                    case 'thirties':
+                        updatedPlayer.thirties += 1;
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                switch (stat) {
+                    case 'wickets':
+                        updatedPlayer.wickets += 1;
+                        break;
+                    case 'threeWickets':
+                        updatedPlayer.threeWickets += 1;
+                        break;
+                    case 'fiveWickets':
+                        updatedPlayer.fiveWickets += 1;
+                        break;
+                    case 'maidens':
+                        updatedPlayer.maidens += 1;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return updatedPlayer;
+        });
+    };
+
+    const handleInputChange = (field, value, isBatting = true) => {
+        if (!isEditing) return;
+
+        setPlayer(prev => {
+            const updatedPlayer = { ...prev };
+
+            if (isBatting) {
+                switch (field) {
+                    case 'strikeRate':
+                        updatedPlayer.strikeRate = parseFloat(value) || 0;
+                        break;
+                    case 'bestBatting':
+                        updatedPlayer.bestBatting = value;
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                switch (field) {
+                    case 'economy':
+                        updatedPlayer.economy = parseFloat(value) || 0;
+                        break;
+                    case 'bestBowling':
+                        updatedPlayer.bestBowling = value;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return updatedPlayer;
+        });
+    };
+
+    const handleSave = () => {
+        setShowSaveConfirm(true);
+    };
+
+    const confirmSave = (confirm) => {
+        if (confirm) {
+            // Here you would typically send the updated data to an API
+            console.log("Data saved:", player);
+            setIsEditing(false);
+        }
+        setShowSaveConfirm(false);
+    };
+
+    const cancelEdit = () => {
+        setPlayer(initialPlayerData);
+        setIsEditing(false);
+    };
+
+    const handleImageChange = () => {
+        setShowImageUpload(true);
+    };
+
+    const confirmImageChange = () => {
+        if (tempImage) {
+            setPlayer(prev => ({ ...prev, image: tempImage }));
+        }
+        setShowImageUpload(false);
+        setTempImage('');
+    };
+
+    const handleAgeChange = () => {
+        setTempAge(player.age.toString());
+    };
+
+    const confirmAgeChange = () => {
+        if (tempAge && !isNaN(tempAge)) {
+            setPlayer(prev => ({ ...prev, age: parseInt(tempAge) }));
+        }
+        setTempAge('');
+    };
 
     if (isLoading) {
         return (
@@ -140,6 +282,38 @@ const PlayerDashboard = () => {
                         </div>
                     </motion.div>
 
+                    {/* Edit/Save buttons */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex justify-end mb-4 gap-2"
+                    >
+                        {!isEditing ? (
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className="px-4 py-2 bg-[#D4AF37] text-black font-medium rounded-lg hover:bg-yellow-500 transition-colors"
+                            >
+                                Edit Stats
+                            </button>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={cancelEdit}
+                                    className="px-4 py-2 bg-gray-600 font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSave}
+                                    className="px-4 py-2 bg-green-600 font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                    Save Changes
+                                </button>
+                            </>
+                        )}
+                    </motion.div>
+
                     {/* Player Summary Card */}
                     <motion.div
                         variants={containerVariants}
@@ -165,31 +339,33 @@ const PlayerDashboard = () => {
                                     <h2 className="text-2xl font-bold">{player.name}</h2>
                                     <p className="text-[#D4AF37]">{player.category}</p>
                                 </div>
+                                {/* Image Change Button */}
+                                <div className="absolute top-4 right-4">
+                                    <button
+                                        onClick={handleImageChange}
+                                        className="px-3 py-1 bg-[#D4AF37] text-black text-sm font-medium rounded-lg hover:bg-yellow-500 transition-colors"
+                                    >
+                                        Change Image
+                                    </button>
+                                </div>
                             </div>
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
                                         <p className="text-gray-400">Age</p>
-                                        <p className="font-bold">{player.age} years</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-bold">{player.age} years</p>
+                                            <button
+                                                onClick={handleAgeChange}
+                                                className="w-5 h-5 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-xs font-bold"
+                                            >
+                                                ✎
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-gray-400">Debut</p>
                                         <p className="font-bold">{player.debut}</p>
-                                    </div>
-                                </div>
-                                
-                                {/* Likes Display */}
-                                <div className="flex items-center justify-center mb-4 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                                    <div className="flex items-center">
-                                        <svg 
-                                            className="w-6 h-6 text-[#D4AF37] mr-2" 
-                                            fill="currentColor" 
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                                        </svg>
-                                        <span className="text-xl font-bold">{player.likes}</span>
-                                        <span className="ml-2 text-gray-400">Likes</span>
                                     </div>
                                 </div>
 
@@ -210,6 +386,7 @@ const PlayerDashboard = () => {
                                     </div>
                                 </div>
 
+                                {/* Moved Playing Style to bottom */}
                                 <div>
                                     <h3 className="text-[#D4AF37] font-bold mb-2">Playing Style</h3>
                                     <div className="flex justify-between">
@@ -221,6 +398,22 @@ const PlayerDashboard = () => {
                                             <p className="text-gray-400">Bowling</p>
                                             <p>{player.bowlingStyle}</p>
                                         </div>
+                                    </div>
+                                </div>
+
+
+                                {/* Moved Likes Display to bottom */}
+                                <div className="flex items-center justify-center mt-4 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                                    <div className="flex items-center">
+                                        <svg
+                                            className="w-6 h-6 text-[#D4AF37] mr-2"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                                        </svg>
+                                        <span className="text-xl font-bold">{player.likes}</span>
+                                        <span className="ml-2 text-gray-400">Likes</span>
                                     </div>
                                 </div>
                             </div>
@@ -248,8 +441,8 @@ const PlayerDashboard = () => {
                                     Performance
                                 </button>
                             </motion.div>
-                            
-                            {/* Tab Content - Solution 2: Keep content mounted but hidden */}
+
+                            {/* Tab Content */}
                             <div className="w-full relative">
                                 {/* Overview Tab */}
                                 <motion.div
@@ -262,18 +455,38 @@ const PlayerDashboard = () => {
                                         {/* Batting Stats */}
                                         <motion.div
                                             variants={statItemVariants}
-                                            className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg"
+                                            className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg relative"
                                             whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
                                         >
                                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Batting Statistics</h3>
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Matches</span>
-                                                    <span className="font-bold text-lg">{player.matches}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.matches}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('matches')}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Runs</span>
-                                                    <span className="font-bold text-lg">{player.runs}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.runs}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('runs')}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Average</span>
@@ -281,11 +494,77 @@ const PlayerDashboard = () => {
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Strike Rate</span>
-                                                    <span className="font-bold text-lg">{player.strikeRate}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="number"
+                                                                value={player.strikeRate}
+                                                                onChange={(e) => handleInputChange('strikeRate', e.target.value)}
+                                                                className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                                step="0.1"
+                                                            />
+                                                        ) : (
+                                                            <span className="font-bold text-lg">{player.strikeRate}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                    <span className="text-gray-400">Best Batting</span>
+                                                    <div className="flex items-center gap-2">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={player.bestBatting}
+                                                                onChange={(e) => handleInputChange('bestBatting', e.target.value)}
+                                                                className="w-32 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            />
+                                                        ) : (
+                                                            <span className="font-bold">{player.bestBatting}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {/* New batting stats */}
+                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                    <span className="text-gray-400">50s</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.halfCenturies}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('halfCenturies')}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                    <span className="text-gray-400">100s</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.centuries}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('centuries')}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2">
-                                                    <span className="text-gray-400">Best Batting</span>
-                                                    <span className="font-bold">{player.bestBatting}</span>
+                                                    <span className="text-gray-400">30s</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.thirties}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('thirties')}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -300,19 +579,91 @@ const PlayerDashboard = () => {
                                             <div className="space-y-4">
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Wickets</span>
-                                                    <span className="font-bold text-lg">{player.wickets}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.wickets}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('wickets', false)}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Economy</span>
-                                                    <span className="font-bold text-lg">{player.economy}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="number"
+                                                                value={player.economy}
+                                                                onChange={(e) => handleInputChange('economy', e.target.value, false)}
+                                                                className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                                step="0.1"
+                                                            />
+                                                        ) : (
+                                                            <span className="font-bold text-lg">{player.economy}</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Best Bowling</span>
-                                                    <span className="font-bold text-lg">{player.bestBowling}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={player.bestBowling}
+                                                                onChange={(e) => handleInputChange('bestBowling', e.target.value, false)}
+                                                                className="w-24 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            />
+                                                        ) : (
+                                                            <span className="font-bold text-lg">{player.bestBowling}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {/* New bowling stats */}
+                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                    <span className="text-gray-400">3 Wickets</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.threeWickets}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('threeWickets', false)}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                    <span className="text-gray-400">5 Wickets</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.fiveWickets}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('fiveWickets', false)}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2">
-                                                    <span className="text-gray-400">Style</span>
-                                                    <span className="font-bold">{player.bowlingStyle}</span>
+                                                    <span className="text-gray-400">Maidens</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-lg">{player.maidens}</span>
+                                                        {isEditing && (
+                                                            <button
+                                                                onClick={() => handleIncrement('maidens', false)}
+                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
+                                                            >
+                                                                +
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -362,7 +713,6 @@ const PlayerDashboard = () => {
                                                 </tbody>
                                             </table>
                                         </div>
-                                        
                                     </div>
                                 </motion.div>
                             </div>
@@ -370,6 +720,107 @@ const PlayerDashboard = () => {
                     </motion.div>
                 </div>
             </div>
+
+            {/* Save Confirmation Modal */}
+            {showSaveConfirm && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#D4AF37] max-w-md w-full mx-4"
+                    >
+                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Save</h3>
+                        <p className="mb-6">Are you sure you want to save these changes?</p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => confirmSave(false)}
+                                className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => confirmSave(true)}
+                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                Yes, Save
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Image Change Modal */}
+            {showImageUpload && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#D4AF37] max-w-md w-full mx-4"
+                    >
+                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Change Player Image</h3>
+                        <div className="mb-4">
+                            <label className="block text-gray-400 mb-2">Image URL</label>
+                            <input
+                                type="text"
+                                value={tempImage}
+                                onChange={(e) => setTempImage(e.target.value)}
+                                placeholder="Enter image URL"
+                                className="w-full bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-3 py-2 text-white"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowImageUpload(false)}
+                                className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmImageChange}
+                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                Change Image
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
+
+            {/* Age Change Modal */}
+            {tempAge && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#D4AF37] max-w-md w-full mx-4"
+                    >
+                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Change Age</h3>
+                        <div className="mb-4">
+                            <label className="block text-gray-400 mb-2">New Age</label>
+                            <input
+                                type="number"
+                                value={tempAge}
+                                onChange={(e) => setTempAge(e.target.value)}
+                                className="w-full bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-3 py-2 text-white"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setTempAge('')}
+                                className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmAgeChange}
+                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                Change Age
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 };
