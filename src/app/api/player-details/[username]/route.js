@@ -1,3 +1,4 @@
+// app/api/player-details/[username]/route.js
 import { connectToDatabase } from "@/lib/mongodb";
 
 export async function GET(request, { params }) {
@@ -31,10 +32,16 @@ export async function GET(request, { params }) {
       });
     }
     
-    return Response.json(playerDetails);
+    // Remove MongoDB _id field from response
+    const { _id, ...cleanDetails } = playerDetails;
+    return Response.json(cleanDetails);
+    
   } catch (error) {
     console.error('Error fetching player details:', error);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return Response.json({ 
+      message: 'Internal server error',
+      error: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -49,16 +56,28 @@ export async function PUT(request, { params }) {
     // Update or insert player details
     const result = await playerDetailsCollection.updateOne(
       { username },
-      { $set: { ...updatedDetails, updatedAt: new Date() } },
+      { 
+        $set: { 
+          ...updatedDetails, 
+          username, // Ensure username is always set
+          updatedAt: new Date() 
+        } 
+      },
       { upsert: true }
     );
     
     return Response.json({ 
+      success: true,
       message: 'Player details updated successfully',
       modifiedCount: result.modifiedCount
     });
+    
   } catch (error) {
     console.error('Error updating player details:', error);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return Response.json({ 
+      success: false, 
+      message: 'Internal server error',
+      error: error.message 
+    }, { status: 500 });
   }
 }

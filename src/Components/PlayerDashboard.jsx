@@ -4,7 +4,14 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-// Animation variants
+// Add toast variants for animation
+const toastVariants = {
+    hidden: { opacity: 0, y: -50 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -50 }
+};
+
+// Animation variants (existing code)
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -51,6 +58,12 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const [tempAge, setTempAge] = useState('');
     const [currentPlayer, setCurrentPlayer] = useState(player);
     const [currentPlayerDetails, setCurrentPlayerDetails] = useState(playerDetails);
+    const [isSaving, setIsSaving] = useState(false);
+    const [imageError, setImageError] = useState('');
+    const [ageError, setAgeError] = useState('');
+
+    // Add state for toast notifications
+    const [toasts, setToasts] = useState([]);
 
     useEffect(() => {
         // Simulate loading
@@ -69,6 +82,22 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         setCurrentPlayerDetails(playerDetails);
     }, [playerDetails]);
 
+    // Function to add a new toast
+    const addToast = (message, type = 'success') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            removeToast(id);
+        }, 3000);
+    };
+
+    // Function to remove a toast
+    const removeToast = (id) => {
+        setToasts(prev => prev.filter(toast => toast.id !== id));
+    };
+
     const handleIncrement = (stat, isBatting = true) => {
         if (!isEditing) return;
 
@@ -79,13 +108,17 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 switch (stat) {
                     case 'matches':
                         updatedDetails.matches += 1;
-                        // Auto-calculate average
-                        updatedDetails.average = parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2));
+                        // Auto-calculate average only if matches > 0
+                        updatedDetails.average = updatedDetails.matches > 0
+                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
+                            : 0;
                         break;
                     case 'runs':
                         updatedDetails.runs += 1;
-                        // Auto-calculate average
-                        updatedDetails.average = parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2));
+                        // Auto-calculate average only if matches > 0
+                        updatedDetails.average = updatedDetails.matches > 0
+                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
+                            : 0;
                         break;
                     case 'halfCenturies':
                         updatedDetails.halfCenturies += 1;
@@ -162,12 +195,20 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
 
     const confirmSave = async (confirm) => {
         if (confirm) {
+            setIsSaving(true);
             const success = await onSaveDetails(currentPlayerDetails);
+
             if (success) {
+                // Refresh the data from the parent component
+                // The parent should handle the data refresh
                 setIsEditing(false);
+                // Show success toast instead of alert
+                addToast('Stats saved successfully!', 'success');
             } else {
-                alert('Failed to save changes');
+                // Show error toast instead of alert
+                addToast('Failed to save changes. Please try again.', 'error');
             }
+            setIsSaving(false);
         }
         setShowSaveConfirm(false);
     };
@@ -179,27 +220,48 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
 
     const handleImageChange = () => {
         setShowImageUpload(true);
+        setImageError('');
     };
 
     const confirmImageChange = () => {
-        if (tempImage) {
-            setCurrentPlayer(prev => ({ ...prev, image: tempImage }));
-            // Here you would typically update the image in the database
+        if (!tempImage) {
+            setImageError('Please enter an image URL');
+            return;
         }
+
+        // Basic URL validation
+        try {
+            new URL(tempImage);
+            setImageError('');
+        } catch (e) {
+            setImageError('Please enter a valid URL');
+            return;
+        }
+
+        setCurrentPlayer(prev => ({ ...prev, image: tempImage }));
         setShowImageUpload(false);
         setTempImage('');
+        // Show toast instead of alert
+        addToast('Image changed successfully!', 'success');
     };
 
     const handleAgeChange = () => {
         setTempAge(currentPlayer.age.toString());
+        setAgeError('');
     };
 
     const confirmAgeChange = () => {
-        if (tempAge && !isNaN(tempAge)) {
-            setCurrentPlayer(prev => ({ ...prev, age: parseInt(tempAge) }));
-            // Here you would typically update the age in the database
+        const ageNum = parseInt(tempAge);
+        if (isNaN(ageNum) || ageNum < 15 || ageNum > 50) {
+            setAgeError('Please enter a valid age (15-50)');
+            return;
         }
+
+        setAgeError('');
+        setCurrentPlayer(prev => ({ ...prev, age: ageNum }));
         setTempAge('');
+        // Show toast instead of alert
+        addToast('Age updated successfully!', 'success');
     };
 
     if (isLoading) {
@@ -216,6 +278,33 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white overflow-hidden">
+            {/* Toast Container */}
+            <div className="fixed top-4 right-4 z-50 space-y-2">
+                {toasts.map(toast => (
+                    <motion.div
+                        key={toast.id}
+                        variants={toastVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        className={`px-4 py-3 rounded-lg shadow-lg flex items-center ${toast.type === 'success'
+                                ? 'bg-green-800 text-green-100'
+                                : 'bg-red-800 text-red-100'
+                            }`}
+                    >
+                        <span className="mr-2">
+                            {toast.type === 'success' ? '✓' : '⚠'}
+                        </span>
+                        <span>{toast.message}</span>
+                        <button
+                            onClick={() => removeToast(toast.id)}
+                            className="ml-4 text-lg font-bold"
+                        >
+                            ×
+                        </button>
+                    </motion.div>
+                ))}
+            </div>
             <div className='w-11/12 mx-auto mt-15 md:px-4'>
                 {/* Animated Background Elements */}
                 <div className="fixed inset-0 z-0 overflow-hidden">
@@ -283,9 +372,10 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 </button>
                                 <button
                                     onClick={handleSave}
-                                    className="px-4 py-2 bg-green-600 font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                    disabled={isSaving}
+                                    className="px-4 py-2 bg-green-600 font-medium rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                                 >
-                                    Save Changes
+                                    {isSaving ? 'Saving...' : 'Save Changes'}
                                 </button>
                             </>
                         )}
@@ -386,9 +476,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Moved Likes Display to bottom */}
-
                             </div>
                         </motion.div>
 
@@ -649,6 +736,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={activeTab === 'performance' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                                     transition={{ duration: 0.3 }}
+
                                 >
                                     <div className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg">
                                         <h3 className="text-xl font-bold mb-6 text-[#D4AF37]">Recent Performance</h3>
@@ -720,9 +808,10 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                             </button>
                             <button
                                 onClick={() => confirmSave(true)}
-                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                                disabled={isSaving}
+                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                             >
-                                Yes, Save
+                                {isSaving ? 'Saving...' : 'Yes, Save'}
                             </button>
                         </div>
                     </motion.div>
@@ -747,6 +836,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 placeholder="Enter image URL"
                                 className="w-full bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-3 py-2 text-white"
                             />
+                            {imageError && <p className="text-red-400 text-sm mt-2">{imageError}</p>}
                         </div>
                         <div className="flex justify-end gap-3">
                             <button
@@ -783,6 +873,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 onChange={(e) => setTempAge(e.target.value)}
                                 className="w-full bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-3 py-2 text-white"
                             />
+                            {ageError && <p className="text-red-400 text-sm mt-2">{ageError}</p>}
                         </div>
                         <div className="flex justify-end gap-3">
                             <button

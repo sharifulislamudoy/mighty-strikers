@@ -1,9 +1,10 @@
+// lib/mongodb.js
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const options = {
-  useUnifiedTopology: true,
   useNewUrlParser: true,
+  useUnifiedTopology: true,
 };
 
 let client;
@@ -25,7 +26,12 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export async function connectToDatabase() {
-  const client = await clientPromise;
-  const db = client.db('mightystrikertsDB');
-  return { db, client };
+  try {
+    const client = await clientPromise;
+    const db = client.db(process.env.MONGODB_DB);
+    return { client, db };
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw new Error('Failed to connect to database');
+  }
 }
