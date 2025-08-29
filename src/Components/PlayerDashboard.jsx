@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 
-// Animation variants (same as before)
+// Animation variants
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -41,7 +41,7 @@ const statItemVariants = {
     }
 };
 
-const PlayerDashboard = () => {
+const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
     const [isEditing, setIsEditing] = useState(false);
@@ -49,44 +49,8 @@ const PlayerDashboard = () => {
     const [showImageUpload, setShowImageUpload] = useState(false);
     const [tempImage, setTempImage] = useState('');
     const [tempAge, setTempAge] = useState('');
-
-    // Player data with additional stats
-    const initialPlayerData = {
-        id: 1,
-        name: 'Alex Johnson',
-        category: 'Captain & Batsman',
-        battingStyle: 'Right Handed',
-        bowlingStyle: 'Right Arm Medium',
-        matches: 45,
-        runs: 2150,
-        wickets: 12,
-        average: 47.8,
-        strikeRate: 132.5,
-        bestBatting: '128* (32)',
-        economy: 7.2,
-        bestBowling: '3/28',
-        age: 28,
-        debut: '2018',
-        image: '/founder.jpg',
-        specialties: ['Power Hitting', 'Leadership', 'Fielding'],
-        likes: 125,
-        recentPerformance: [
-            { match: 'vs Titans', runs: 68, balls: 42, wickets: 0, result: 'Won' },
-            { match: 'vs Warriors', runs: 42, balls: 28, wickets: 1, result: 'Lost' },
-            { match: 'vs Strikers', runs: 105, balls: 58, wickets: 0, result: 'Won' },
-            { match: 'vs Chargers', runs: 35, balls: 22, wickets: 2, result: 'Won' },
-            { match: 'vs Royals', runs: 81, balls: 47, wickets: 0, result: 'Won' },
-        ],
-        // New stats
-        halfCenturies: 15,
-        centuries: 3,
-        thirties: 22,
-        threeWickets: 2,
-        fiveWickets: 0,
-        maidens: 5
-    };
-
-    const [player, setPlayer] = useState(initialPlayerData);
+    const [currentPlayer, setCurrentPlayer] = useState(player);
+    const [currentPlayerDetails, setCurrentPlayerDetails] = useState(playerDetails);
 
     useEffect(() => {
         // Simulate loading
@@ -97,32 +61,40 @@ const PlayerDashboard = () => {
         return () => clearTimeout(timer);
     }, []);
 
+    useEffect(() => {
+        setCurrentPlayer(player);
+    }, [player]);
+
+    useEffect(() => {
+        setCurrentPlayerDetails(playerDetails);
+    }, [playerDetails]);
+
     const handleIncrement = (stat, isBatting = true) => {
         if (!isEditing) return;
 
-        setPlayer(prev => {
-            let updatedPlayer = { ...prev };
+        setCurrentPlayerDetails(prev => {
+            let updatedDetails = { ...prev };
 
             if (isBatting) {
                 switch (stat) {
                     case 'matches':
-                        updatedPlayer.matches += 1;
+                        updatedDetails.matches += 1;
                         // Auto-calculate average
-                        updatedPlayer.average = parseFloat((updatedPlayer.runs / updatedPlayer.matches).toFixed(2));
+                        updatedDetails.average = parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2));
                         break;
                     case 'runs':
-                        updatedPlayer.runs += 1;
+                        updatedDetails.runs += 1;
                         // Auto-calculate average
-                        updatedPlayer.average = parseFloat((updatedPlayer.runs / updatedPlayer.matches).toFixed(2));
+                        updatedDetails.average = parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2));
                         break;
                     case 'halfCenturies':
-                        updatedPlayer.halfCenturies += 1;
+                        updatedDetails.halfCenturies += 1;
                         break;
                     case 'centuries':
-                        updatedPlayer.centuries += 1;
+                        updatedDetails.centuries += 1;
                         break;
                     case 'thirties':
-                        updatedPlayer.thirties += 1;
+                        updatedDetails.thirties += 1;
                         break;
                     default:
                         break;
@@ -130,39 +102,39 @@ const PlayerDashboard = () => {
             } else {
                 switch (stat) {
                     case 'wickets':
-                        updatedPlayer.wickets += 1;
+                        updatedDetails.wickets += 1;
                         break;
                     case 'threeWickets':
-                        updatedPlayer.threeWickets += 1;
+                        updatedDetails.threeWickets += 1;
                         break;
                     case 'fiveWickets':
-                        updatedPlayer.fiveWickets += 1;
+                        updatedDetails.fiveWickets += 1;
                         break;
                     case 'maidens':
-                        updatedPlayer.maidens += 1;
+                        updatedDetails.maidens += 1;
                         break;
                     default:
                         break;
                 }
             }
 
-            return updatedPlayer;
+            return updatedDetails;
         });
     };
 
     const handleInputChange = (field, value, isBatting = true) => {
         if (!isEditing) return;
 
-        setPlayer(prev => {
-            const updatedPlayer = { ...prev };
+        setCurrentPlayerDetails(prev => {
+            const updatedDetails = { ...prev };
 
             if (isBatting) {
                 switch (field) {
                     case 'strikeRate':
-                        updatedPlayer.strikeRate = parseFloat(value) || 0;
+                        updatedDetails.strikeRate = parseFloat(value) || 0;
                         break;
                     case 'bestBatting':
-                        updatedPlayer.bestBatting = value;
+                        updatedDetails.bestBatting = value;
                         break;
                     default:
                         break;
@@ -170,35 +142,38 @@ const PlayerDashboard = () => {
             } else {
                 switch (field) {
                     case 'economy':
-                        updatedPlayer.economy = parseFloat(value) || 0;
+                        updatedDetails.economy = parseFloat(value) || 0;
                         break;
                     case 'bestBowling':
-                        updatedPlayer.bestBowling = value;
+                        updatedDetails.bestBowling = value;
                         break;
                     default:
                         break;
                 }
             }
 
-            return updatedPlayer;
+            return updatedDetails;
         });
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setShowSaveConfirm(true);
     };
 
-    const confirmSave = (confirm) => {
+    const confirmSave = async (confirm) => {
         if (confirm) {
-            // Here you would typically send the updated data to an API
-            console.log("Data saved:", player);
-            setIsEditing(false);
+            const success = await onSaveDetails(currentPlayerDetails);
+            if (success) {
+                setIsEditing(false);
+            } else {
+                alert('Failed to save changes');
+            }
         }
         setShowSaveConfirm(false);
     };
 
     const cancelEdit = () => {
-        setPlayer(initialPlayerData);
+        setCurrentPlayerDetails(playerDetails);
         setIsEditing(false);
     };
 
@@ -208,19 +183,21 @@ const PlayerDashboard = () => {
 
     const confirmImageChange = () => {
         if (tempImage) {
-            setPlayer(prev => ({ ...prev, image: tempImage }));
+            setCurrentPlayer(prev => ({ ...prev, image: tempImage }));
+            // Here you would typically update the image in the database
         }
         setShowImageUpload(false);
         setTempImage('');
     };
 
     const handleAgeChange = () => {
-        setTempAge(player.age.toString());
+        setTempAge(currentPlayer.age.toString());
     };
 
     const confirmAgeChange = () => {
         if (tempAge && !isNaN(tempAge)) {
-            setPlayer(prev => ({ ...prev, age: parseInt(tempAge) }));
+            setCurrentPlayer(prev => ({ ...prev, age: parseInt(tempAge) }));
+            // Here you would typically update the age in the database
         }
         setTempAge('');
     };
@@ -326,18 +303,18 @@ const PlayerDashboard = () => {
                             variants={itemVariants}
                             className="lg:col-span-1 bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl border border-[#2a2a2a] shadow-lg overflow-hidden"
                         >
-                            <div className="relative h-72">
+                            <div className="relative h-84">
                                 <Image
-                                    src={player.image || '/default-player.jpg'}
-                                    alt={player.name}
+                                    src={currentPlayer.image || '/default-player.jpg'}
+                                    alt={currentPlayer.name}
                                     fill
                                     className="object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70" />
                                 <div className="absolute inset-0 bg-gradient-to-r from-[#D4AF37] to-transparent opacity-10" />
                                 <div className="absolute bottom-4 left-4">
-                                    <h2 className="text-2xl font-bold">{player.name}</h2>
-                                    <p className="text-[#D4AF37]">{player.category}</p>
+                                    <h2 className="text-2xl font-bold">{currentPlayer.name}</h2>
+                                    <p className="text-[#D4AF37]">{currentPlayer.category}</p>
                                 </div>
                                 {/* Image Change Button */}
                                 <div className="absolute top-4 right-4">
@@ -354,7 +331,7 @@ const PlayerDashboard = () => {
                                     <div>
                                         <p className="text-gray-400">Age</p>
                                         <div className="flex items-center gap-2">
-                                            <p className="font-bold">{player.age} years</p>
+                                            <p className="font-bold">{currentPlayer.age} years</p>
                                             <button
                                                 onClick={handleAgeChange}
                                                 className="w-5 h-5 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-xs font-bold"
@@ -363,16 +340,25 @@ const PlayerDashboard = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-gray-400">Debut</p>
-                                        <p className="font-bold">{player.debut}</p>
+                                    <div className="flex items-center justify-center mt-4 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                                        <div className="flex items-center">
+                                            <svg
+                                                className="w-6 h-6 text-[#D4AF37] mr-2"
+                                                fill="currentColor"
+                                                viewBox="0 0 20 20"
+                                            >
+                                                <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                                            </svg>
+                                            <span className="text-xl font-bold">{currentPlayer.likes || 0}</span>
+                                            <span className="ml-2 text-gray-400">Likes</span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="mb-4">
                                     <h3 className="text-[#D4AF37] font-bold mb-2">Specialties</h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {player.specialties.map((specialty, index) => (
+                                        {currentPlayer.specialties && currentPlayer.specialties.map((specialty, index) => (
                                             <motion.span
                                                 key={index}
                                                 initial={{ opacity: 0, scale: 0.8 }}
@@ -392,30 +378,17 @@ const PlayerDashboard = () => {
                                     <div className="flex justify-between">
                                         <div>
                                             <p className="text-gray-400">Batting</p>
-                                            <p>{player.battingStyle}</p>
+                                            <p>{currentPlayer.battingStyle || 'N/A'}</p>
                                         </div>
                                         <div>
                                             <p className="text-gray-400">Bowling</p>
-                                            <p>{player.bowlingStyle}</p>
+                                            <p>{currentPlayer.bowlingStyle || 'N/A'}</p>
                                         </div>
                                     </div>
                                 </div>
 
-
                                 {/* Moved Likes Display to bottom */}
-                                <div className="flex items-center justify-center mt-4 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                                    <div className="flex items-center">
-                                        <svg
-                                            className="w-6 h-6 text-[#D4AF37] mr-2"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                                        </svg>
-                                        <span className="text-xl font-bold">{player.likes}</span>
-                                        <span className="ml-2 text-gray-400">Likes</span>
-                                    </div>
-                                </div>
+
                             </div>
                         </motion.div>
 
@@ -463,7 +436,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Matches</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.matches}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.matches || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('matches')}
@@ -477,7 +450,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Runs</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.runs}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.runs || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('runs')}
@@ -490,7 +463,7 @@ const PlayerDashboard = () => {
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Average</span>
-                                                    <span className="font-bold text-lg">{player.average}</span>
+                                                    <span className="font-bold text-lg">{currentPlayerDetails.average || 0}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Strike Rate</span>
@@ -498,13 +471,13 @@ const PlayerDashboard = () => {
                                                         {isEditing ? (
                                                             <input
                                                                 type="number"
-                                                                value={player.strikeRate}
+                                                                value={currentPlayerDetails.strikeRate || 0}
                                                                 onChange={(e) => handleInputChange('strikeRate', e.target.value)}
                                                                 className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
                                                                 step="0.1"
                                                             />
                                                         ) : (
-                                                            <span className="font-bold text-lg">{player.strikeRate}</span>
+                                                            <span className="font-bold text-lg">{currentPlayerDetails.strikeRate || 0}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -514,12 +487,12 @@ const PlayerDashboard = () => {
                                                         {isEditing ? (
                                                             <input
                                                                 type="text"
-                                                                value={player.bestBatting}
+                                                                value={currentPlayerDetails.bestBatting || '0 (0)'}
                                                                 onChange={(e) => handleInputChange('bestBatting', e.target.value)}
                                                                 className="w-32 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
                                                             />
                                                         ) : (
-                                                            <span className="font-bold">{player.bestBatting}</span>
+                                                            <span className="font-bold">{currentPlayerDetails.bestBatting || '0 (0)'}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -527,7 +500,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">50s</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.halfCenturies}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.halfCenturies || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('halfCenturies')}
@@ -541,7 +514,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">100s</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.centuries}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.centuries || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('centuries')}
@@ -555,7 +528,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2">
                                                     <span className="text-gray-400">30s</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.thirties}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.thirties || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('thirties')}
@@ -580,7 +553,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">Wickets</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.wickets}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.wickets || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('wickets', false)}
@@ -597,13 +570,13 @@ const PlayerDashboard = () => {
                                                         {isEditing ? (
                                                             <input
                                                                 type="number"
-                                                                value={player.economy}
+                                                                value={currentPlayerDetails.economy || 0}
                                                                 onChange={(e) => handleInputChange('economy', e.target.value, false)}
                                                                 className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
                                                                 step="0.1"
                                                             />
                                                         ) : (
-                                                            <span className="font-bold text-lg">{player.economy}</span>
+                                                            <span className="font-bold text-lg">{currentPlayerDetails.economy || 0}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -613,12 +586,12 @@ const PlayerDashboard = () => {
                                                         {isEditing ? (
                                                             <input
                                                                 type="text"
-                                                                value={player.bestBowling}
+                                                                value={currentPlayerDetails.bestBowling || '0/0'}
                                                                 onChange={(e) => handleInputChange('bestBowling', e.target.value, false)}
                                                                 className="w-24 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
                                                             />
                                                         ) : (
-                                                            <span className="font-bold text-lg">{player.bestBowling}</span>
+                                                            <span className="font-bold text-lg">{currentPlayerDetails.bestBowling || '0/0'}</span>
                                                         )}
                                                     </div>
                                                 </div>
@@ -626,7 +599,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">3 Wickets</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.threeWickets}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.threeWickets || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('threeWickets', false)}
@@ -640,7 +613,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                     <span className="text-gray-400">5 Wickets</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.fiveWickets}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.fiveWickets || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('fiveWickets', false)}
@@ -654,7 +627,7 @@ const PlayerDashboard = () => {
                                                 <div className="flex justify-between items-center py-2">
                                                     <span className="text-gray-400">Maidens</span>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{player.maidens}</span>
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.maidens || 0}</span>
                                                         {isEditing && (
                                                             <button
                                                                 onClick={() => handleIncrement('maidens', false)}
@@ -691,7 +664,7 @@ const PlayerDashboard = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {player.recentPerformance.map((match, index) => (
+                                                    {currentPlayerDetails.recentPerformance && currentPlayerDetails.recentPerformance.map((match, index) => (
                                                         <motion.tr
                                                             key={index}
                                                             initial={{ opacity: 0 }}
@@ -710,6 +683,13 @@ const PlayerDashboard = () => {
                                                             </td>
                                                         </motion.tr>
                                                     ))}
+                                                    {(!currentPlayerDetails.recentPerformance || currentPlayerDetails.recentPerformance.length === 0) && (
+                                                        <tr>
+                                                            <td colSpan="5" className="py-4 text-center text-gray-400">
+                                                                No recent performance data available
+                                                            </td>
+                                                        </tr>
+                                                    )}
                                                 </tbody>
                                             </table>
                                         </div>

@@ -12,19 +12,19 @@ export async function POST(request) {
       email,
       password,
       photo,
-      category, // This contains the role data from the form (previously called category)
+      category,
       specialties,
       battingStyle,
       bowlingStyle,
       age
     } = await request.json();
 
-    // Generate username from name (convert to lowercase and replace spaces with hyphens)
+    // Generate username from name
     const baseUsername = name.toLowerCase().replace(/\s+/g, '-');
     let username = baseUsername;
     let counter = 1;
 
-    // Check if user already exists with phone, email, or generated username
+    // Check if user already exists
     const existingUser = await playersCollection.findOne({ 
       $or: [
         { phone }, 
@@ -73,8 +73,8 @@ export async function POST(request) {
       battingStyle,
       bowlingStyle,
       age: parseInt(age),
-      role: 'player', // Always set role to 'player'
-      likes: 0, // Add likes field with initial value 0
+      role: 'player',
+      likes: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     });

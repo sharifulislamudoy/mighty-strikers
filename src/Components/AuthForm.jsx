@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { signIn, signUp } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import toast, { Toaster } from 'react-hot-toast';
 
 const AuthForm = () => {
@@ -21,7 +21,6 @@ const AuthForm = () => {
     battingStyle: '',
     bowlingStyle: '',
     age: '',
-    role: ''
   });
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,12 +126,21 @@ const AuthForm = () => {
           throw new Error(result.error);
         }
 
+        // After successful login, get the user data to get the username
+        const userResponse = await fetch(`/api/players/by-phone/${formData.phone}`);
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+        
+        const userData = await userResponse.json();
+        const username = userData.username;
+
         // Show success toast for login
         toast.success('Login successful! Redirecting...');
 
-        // Redirect to dashboard after a short delay
+        // Redirect to dynamic dashboard route
         setTimeout(() => {
-          router.push('/dashboard/playerdashboard');
+          router.push(`/player/dashboard/${username}`);
         }, 1500);
       } else {
         // Send registration data to your API
@@ -179,9 +187,9 @@ const AuthForm = () => {
         });
         setPreviewUrl(null);
 
-        // Redirect to dashboard after a short delay
+        // Redirect to dynamic dashboard route
         setTimeout(() => {
-          router.push('/dashboard/playerdashboard');
+          router.push(`/player/dashboard/${result.username}`);
         }, 1500);
       }
     } catch (err) {
@@ -438,12 +446,12 @@ const AuthForm = () => {
                   {/* Preferred Role and Category side by side on large screens */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="role" className="block text-sm font-medium text-gray-300 mb-2">
+                      <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-2">
                         Preferred Role
                       </label>
                       <input
-                        id="category" // change from role
-                        name="category" // change from role
+                        id="category"
+                        name="category"
                         type="text"
                         value={formData.category}
                         onChange={handleInputChange}
@@ -451,7 +459,6 @@ const AuthForm = () => {
                         placeholder="e.g. Captain & Batsman"
                       />
                     </div>
-
 
                     <div>
                       <label htmlFor="age" className="block text-sm font-medium text-gray-300 mb-2">
