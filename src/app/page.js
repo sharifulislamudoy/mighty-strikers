@@ -1,7 +1,7 @@
-import AboutSection from "./components/AboutSection";
-import FounderSection from "./components/FounderSection";
-import HeroSection from "./components/HeroSection";
-import PerformanceAnalytics from "./components/PerformanceAnalytics";
+import AboutSection from "./Components/AboutSection";
+import FounderSection from "./Components/FounderSection";
+import HeroSection from "./Components/HeroSection";
+import PerformanceAnalytics from "./Components/PerformanceAnalytics";
 
 export default function Home() {
   return (

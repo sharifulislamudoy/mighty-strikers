@@ -1,8 +1,8 @@
 // components/ClientLayout.jsx
 'use client';
 
-import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
+import Footer from "@/Components/Footer";
+import Navbar from "@/Components/Navbar";
 import { SessionProvider } from "next-auth/react";
 
 

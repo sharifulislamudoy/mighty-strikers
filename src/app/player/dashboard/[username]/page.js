@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import PlayerDashboard from '@/components/PlayerDashboard';
+import PlayerDashboard from '@/Components/PlayerDashboard';
 
 export default function PlayerDashboardPage({ params }) {
   const [player, setPlayer] = useState(null);
