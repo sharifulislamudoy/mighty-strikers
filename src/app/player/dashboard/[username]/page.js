@@ -54,7 +54,6 @@ export default function PlayerDashboardPage({ params }) {
       if (!response.ok) {
         throw new Error('Failed to save details');
       }
-      
       return true;
     } catch (err) {
       console.error('Error saving details:', err);
