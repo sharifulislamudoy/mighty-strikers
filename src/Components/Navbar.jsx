@@ -61,6 +61,9 @@ const Navbar = () => {
     setShowLogoutConfirm(false);
   };
 
+  // Get username from session for dynamic route
+  const username = session?.user?.username || session?.user?.name?.toLowerCase().replace(/\s+/g, '-');
+
   return (
     <>
       <motion.nav 
@@ -147,7 +150,7 @@ const Navbar = () => {
                       </div>
                       
                       <Link
-                        href="/dashboard/playerdashboard"
+                        href={`/player/dashboard/${username}`}
                         onClick={() => setUserMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
                       >
@@ -250,7 +253,7 @@ const Navbar = () => {
                         transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
                       >
                         <Link
-                          href="/dashboard/playerdashboard"
+                          href={`/player/dashboard/${username}`}
                           onClick={() => setIsOpen(false)}
                           className="block py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
                         >

@@ -1,9 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useInView } from 'react-intersection-observer';
 
 const AboutSection = () => {
+    const route = useRouter()
     // Animation for section header
     const headerVariants = {
         hidden: { opacity: 0, y: 50 },
@@ -54,6 +56,10 @@ const AboutSection = () => {
         triggerOnce: true,
         threshold: 0.1,
     });
+
+    const handleMessage = () => {
+        route.push('https://m.me/mightystrikers1')
+    }
 
     return (
         <section className="relative py-20 bg-gradient-to-b from-[#0A0A0A] to-black overflow-hidden">
@@ -157,6 +163,7 @@ const AboutSection = () => {
                                     We're always looking for passionate players who share our values and love for cricket.
                                 </p>
                                 <motion.button
+                                    onClick={handleMessage}
                                     whileHover={{
                                         scale: 1.05,
                                         boxShadow: "0 0 20px rgba(212, 175, 55, 0.5)"
