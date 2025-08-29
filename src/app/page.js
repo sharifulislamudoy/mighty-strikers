@@ -1,8 +1,8 @@
-import Image from "next/image";
-import HeroSection from "./components/HeroSection";
 import AboutSection from "./components/AboutSection";
-import PerformanceAnalytics from "./components/PerformanceAnalytics";
 import FounderSection from "./components/FounderSection";
+import HeroSection from "./components/HeroSection";
+import PerformanceAnalytics from "./components/PerformanceAnalytics";
+
 
 export default function Home() {
   return (
