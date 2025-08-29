@@ -64,18 +64,19 @@ const Footer = () => {
     return (
         <>
             {/* Floating Message Button - Always Visible */}
-            <motion.button
+            <motion.a
                 className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#D4AF37] rounded-full flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.1, backgroundColor: "#c19b2e" }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.5 }}
-                onClick={() => alert('Send us a message!')}
+                href='https://m.me/mightystrikers1'
+                target='_blank'
                 aria-label="Send message"
             >
                 <span className="text-xl"><FaFacebookMessenger /></span>
-            </motion.button>
+            </motion.a>
 
             <footer className="relative bg-gradient-to-b from-[#0A0A0A] to-black text-white overflow-hidden pt-16 pb-8">
                 <div className='w-11/12 mx-auto'>
@@ -208,7 +209,7 @@ const Footer = () => {
 
                         {/* Bottom section */}
                         <motion.div
-                            className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center"
+                            className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-center items-center"
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
                             transition={{ duration: 0.8 }}
@@ -217,30 +218,6 @@ const Footer = () => {
                             <p className="text-gray-400 text-sm mb-4 md:mb-0">
                                 © {new Date().getFullYear()} Mighty Strikers Cricket Club. All rights reserved.
                             </p>
-
-                            <div className="flex space-x-6">
-                                <motion.a
-                                    href="#"
-                                    className="text-gray-400 hover:text-[#D4AF37] text-sm"
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    Privacy Policy
-                                </motion.a>
-                                <motion.a
-                                    href="#"
-                                    className="text-gray-400 hover:text-[#D4AF37] text-sm"
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    Terms of Service
-                                </motion.a>
-                                <motion.a
-                                    href="#"
-                                    className="text-gray-400 hover:text-[#D4AF37] text-sm"
-                                    whileHover={{ scale: 1.05 }}
-                                >
-                                    Cookie Policy
-                                </motion.a>
-                            </div>
                         </motion.div>
                     </div>
 
