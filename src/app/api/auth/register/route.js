@@ -12,11 +12,12 @@ export async function POST(request) {
       email,
       password,
       photo,
-      category, // This contains the role data from the form (previously called category)
+      category,
       specialties,
       battingStyle,
       bowlingStyle,
-      age
+      age,
+      profileUrl // Add this new field
     } = await request.json();
 
     // Generate username from name (convert to lowercase and replace spaces with hyphens)
@@ -73,8 +74,9 @@ export async function POST(request) {
       battingStyle,
       bowlingStyle,
       age: parseInt(age),
-      role: 'player', // Always set role to 'player'
-      likes: 0, // Add likes field with initial value 0
+      profileUrl: profileUrl || '', // Add this field
+      role: 'player',
+      likes: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     });

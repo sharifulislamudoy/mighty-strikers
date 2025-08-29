@@ -288,8 +288,8 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                         animate="visible"
                         exit="exit"
                         className={`px-4 py-3 rounded-lg shadow-lg flex items-center ${toast.type === 'success'
-                                ? 'bg-green-800 text-green-100'
-                                : 'bg-red-800 text-red-100'
+                            ? 'bg-green-800 text-green-100'
+                            : 'bg-red-800 text-red-100'
                             }`}
                     >
                         <span className="mr-2">
@@ -393,9 +393,9 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                             variants={itemVariants}
                             className="lg:col-span-1 bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl border border-[#2a2a2a] shadow-lg overflow-hidden"
                         >
-                            <div className="relative h-84">
+                            <div className="relative h-65">
                                 <Image
-                                    src={currentPlayer.image || '/default-player.jpg'}
+                                    src={currentPlayer.image || '/Mighty Strikers_ Golden Power.png'}
                                     alt={currentPlayer.name}
                                     fill
                                     className="object-cover"
@@ -444,6 +444,24 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* CrickHeroes Profile Link */}
+                                {currentPlayer.profileUrl && (
+                                    <div className="mb-4">
+                                        <h3 className="text-[#D4AF37] font-bold mb-2">CrickHeroes Profile</h3>
+                                        <a
+                                            href={currentPlayer.profileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center px-3 py-1 bg-[#1a1a1a] border border-[#D4AF37] rounded-lg text-sm text-white hover:bg-[#D4AF37] hover:text-black transition-colors"
+                                        >
+                                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                            View on CrickHeroes
+                                        </a>
+                                    </div>
+                                )}
 
                                 <div className="mb-4">
                                     <h3 className="text-[#D4AF37] font-bold mb-2">Specialties</h3>

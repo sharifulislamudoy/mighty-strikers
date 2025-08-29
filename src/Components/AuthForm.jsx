@@ -21,6 +21,7 @@ const AuthForm = () => {
     battingStyle: '',
     bowlingStyle: '',
     age: '',
+    profileUrl: '', // New field added
   });
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,6 +185,7 @@ const AuthForm = () => {
           battingStyle: '',
           bowlingStyle: '',
           age: '',
+          profileUrl: '', // Reset the new field
         });
         setPreviewUrl(null);
 
@@ -440,7 +442,6 @@ const AuthForm = () => {
                         )}
                       </button>
                     </div>
-
                   </div>
 
                   {/* Preferred Role and Category side by side on large screens */}
@@ -522,6 +523,25 @@ const AuthForm = () => {
                     </div>
                   </div>
 
+                  {/* CrickHeroes Profile URL */}
+                  <div>
+                    <label htmlFor="profileUrl" className="block text-sm font-medium text-gray-300 mb-2">
+                      Your CrickHeroes Profile URL
+                    </label>
+                    <input
+                      id="profileUrl"
+                      name="profileUrl"
+                      type="url"
+                      value={formData.profileUrl}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
+                      placeholder="e.g., https://crickheroes.com/your-profile"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Optional: Link to your existing CrickHeroes profile
+                    </p>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Specialties (Max 3)
@@ -533,7 +553,7 @@ const AuthForm = () => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           className={`cursor-pointer p-2 rounded-lg text-center text-sm border transition-all ${formData.specialties.includes(specialty)
-                            ? 'bg-[#f0c22c] bg-opacity-20 border-[#f0c22c] text-[#f0c22c]'
+                            ? 'bg-[#f0c22c] bg-opacity-20 border-[#f0c22c] text-[#1A1A1A]'
                             : 'bg-[#1A1A1A] border-[#2A2A2A] text-gray-300 hover:border-[#f0c22c]'
                             } ${formData.specialties.length >= 3 &&
                               !formData.specialties.includes(specialty)
