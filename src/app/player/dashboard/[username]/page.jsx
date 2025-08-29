@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import PlayerDashboard from '@/Components/PlayerDashboard';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export default function PlayerDashboardPage() {
   const [player, setPlayer] = useState(null);
@@ -14,69 +15,74 @@ export default function PlayerDashboardPage() {
   const params = useParams();
   const username = params.username;
 
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) {
+      router.push("/auth-form");
+      return;
+    }
+    if (session.user.username !== username) {
+      router.push("/unauthorized");
+    }
+  }, [status, session, username, router]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        // Fetch player data
         const playerResponse = await fetch(`/api/players/${username}`);
-        if (!playerResponse.ok) {
-          throw new Error('Player not found');
-        }
+        if (!playerResponse.ok) throw new Error('Player not found');
         const playerData = await playerResponse.json();
 
-        // Fetch player details
         const detailsResponse = await fetch(`/api/player-details/${username}`);
-        if (!detailsResponse.ok) {
-          throw new Error('Failed to fetch player details');
-        }
+        if (!detailsResponse.ok) throw new Error('Failed to fetch player details');
         const detailsData = await detailsResponse.json();
 
         setPlayer(playerData);
         setPlayerDetails(detailsData);
       } catch (err) {
-        console.error('Error fetching data:', err);
         setError(err.message);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (username) {
-      fetchData();
-    }
+    if (username) fetchData();
   }, [username]);
 
-const handleSaveDetails = async (updatedDetails) => {
-  try {
-    console.log('Saving details:', updatedDetails);
-    
-    const response = await fetch(`/api/player-details/${username}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedDetails),
-    });
+  const handleSaveDetails = async (updatedDetails) => {
+    try {
+      console.log('Saving details:', updatedDetails);
 
-    console.log('Response status:', response.status);
-    
-    const result = await response.json();
-    console.log('Response result:', result);
+      const response = await fetch(`/api/player-details/${username}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedDetails),
+      });
 
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Failed to save details');
+      console.log('Response status:', response.status);
+
+      const result = await response.json();
+      console.log('Response result:', result);
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to save details');
+      }
+
+      return true;
+    } catch (err) {
+      console.error('Error saving details:', err);
+      alert('Error: ' + err.message);
+      return false;
     }
-
-    return true;
-  } catch (err) {
-    console.error('Error saving details:', err);
-    alert('Error: ' + err.message);
-    return false;
-  }
-};
+  };
 
   if (isLoading) {
     return (
@@ -92,7 +98,7 @@ const handleSaveDetails = async (updatedDetails) => {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
           <p className="text-gray-400">{error}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-[#D4AF37] text-black rounded-lg hover:bg-yellow-500"
           >
