@@ -55,8 +55,8 @@ const TabButton = ({ active, onClick, children }) => (
     <button
         onClick={onClick}
         className={`px-6 py-3 text-lg font-medium transition-all duration-300 ${active
-                ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]'
-                : 'text-gray-400 hover:text-white'
+            ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]'
+            : 'text-gray-400 hover:text-white'
             }`}
     >
         {children}
@@ -93,12 +93,13 @@ const PlayerDetailsPage = () => {
                 if (detailsResponse.ok) {
                     const detailsData = await detailsResponse.json();
                     setPlayerDetails(detailsData);
+                } else {
+                    console.warn('Player details not found');
                 }
-                // Note: We don't throw error if details fail - we'll handle missing stats gracefully
 
                 // Check if user has already liked this player
                 const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
-                if (likedPlayers[playerData._id]) {
+                if (likedPlayers[username]) {
                     setLiked(true);
                 }
 
@@ -119,45 +120,58 @@ const PlayerDetailsPage = () => {
         if (!player) return;
 
         try {
-            if (liked) {
-                // Unlike the player
-                setLikeCount(prev => prev - 1);
-                setLiked(false);
+            console.log('Player username:', player.username);
+            console.log('Making API call to:', `/api/players/${player.username}/like`);
 
-                // Update localStorage
-                const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
-                delete likedPlayers[player._id];
-                localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
+            // Store current state in case we need to revert
+            const previousLiked = liked;
+            const previousLikeCount = likeCount;
 
-                // Update in database (optional)
-                await fetch(`/api/players/${player._id}/like`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ liked: false }),
-                });
+            // Optimistically update UI
+            setLiked(!liked);
+            setLikeCount(prev => !liked ? prev + 1 : prev - 1);
+
+            // Update localStorage
+            const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
+            if (!liked) {
+                likedPlayers[player.username] = true;
             } else {
-                // Like the player
-                setLikeCount(prev => prev + 1);
-                setLiked(true);
-
-                // Update localStorage
-                const likedPlayers = JSON.parse(localStorage.getItem('likedPlayers') || '{}');
-                likedPlayers[player._id] = true;
-                localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
-
-                // Update in database (optional)
-                await fetch(`/api/players/${player._id}/like`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ liked: true }),
-                });
+                delete likedPlayers[player.username];
             }
+            localStorage.setItem('likedPlayers', JSON.stringify(likedPlayers));
+
+            // Make API call
+            const response = await fetch(`/api/players/${player.username}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ liked: !liked }),
+            });
+
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('API Error:', errorData);
+                throw new Error(errorData.message || 'Failed to update like');
+            }
+
+            const data = await response.json();
+            console.log('API Success:', data);
+
+            // Update with server response to ensure consistency
+            setLikeCount(data.likes);
+
         } catch (err) {
             console.error('Error updating like:', err);
+
+            // Revert UI on error
+            setLiked(liked);
+            setLikeCount(likeCount);
+
+            // Show specific error message
+            alert(`Error: ${err.message}`);
         }
     };
 
@@ -281,7 +295,7 @@ const PlayerDetailsPage = () => {
                                 className="object-cover"
                                 priority
                             />
-                            
+
                             {/* Like Button as Overlay */}
                             <motion.div
                                 className="absolute top-4 right-4 z-30"
@@ -307,7 +321,7 @@ const PlayerDetailsPage = () => {
                                     </svg>
                                 </motion.button>
                             </motion.div>
-                            
+
                             <motion.div
                                 className="absolute bottom-4 left-4 z-20"
                                 initial={{ opacity: 0, y: 20 }}
@@ -318,7 +332,7 @@ const PlayerDetailsPage = () => {
                                 <p className="text-xl text-[#D4AF37] capitalize">{player.category}</p>
                                 <div className="flex items-center mt-2 text-sm">
                                     <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                     </svg>
                                     <span>{likeCount} likes</span>
                                 </div>
@@ -644,8 +658,8 @@ const PerformanceTab = ({ playerDetails }) => {
                                 <td className="py-3">{match.wickets || '-'}</td>
                                 <td className="py-3">
                                     <span className={`px-2 py-1 rounded text-xs ${match.result === 'win' ? 'bg-green-900 text-green-300' :
-                                            match.result === 'loss' ? 'bg-red-900 text-red-300' :
-                                                'bg-gray-800 text-gray-300'
+                                        match.result === 'loss' ? 'bg-red-900 text-red-300' :
+                                            'bg-gray-800 text-gray-300'
                                         }`}>
                                         {match.result || 'draw'}
                                     </span>
