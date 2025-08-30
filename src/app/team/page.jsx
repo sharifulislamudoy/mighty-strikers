@@ -11,6 +11,33 @@ const TeamPage = () => {
     const [isMobile, setIsMobile] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(6);
+    const [teamMembers, setTeamMembers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Fetch team members from API
+    useEffect(() => {
+        const fetchTeamMembers = async () => {
+            try {
+                setLoading(true);
+                const response = await fetch('/api/players');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch players');
+                }
+                
+                const players = await response.json();
+                setTeamMembers(players);
+            } catch (err) {
+                console.error('Error fetching players:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTeamMembers();
+    }, []);
 
     // Check screen size on mount and resize
     useEffect(() => {
@@ -75,155 +102,13 @@ const TeamPage = () => {
         }
     };
 
-    // Team data
+    // Team categories
     const teamCategories = [
         { id: 'all', name: 'All Players' },
-        { id: 'batsmen', name: 'Batsmen' },
-        { id: 'bowlers', name: 'Bowlers' },
-        { id: 'allrounders', name: 'All-Rounders' },
+        { id: 'Batsman', name: 'Batsmen' },
+        { id: 'Bowler', name: 'Bowlers' },
+        { id: 'All-Rounder', name: 'All-Rounders' },
         { id: 'staff', name: 'Support Staff' },
-    ];
-
-    const teamMembers = [
-        {
-            id: 1,
-            name: 'Alex Johnson',
-            role: 'Captain & Batsman',
-            category: 'batsmen',
-            battingStyle: 'Right Handed',
-            bowlingStyle: 'Right Arm Medium',
-            matches: 45,
-            runs: 2150,
-            wickets: 12,
-            image: '/player1.jpg'
-        },
-        {
-            id: 2,
-            name: 'James Wilson',
-            role: 'Vice Captain & Bowler',
-            category: 'bowlers',
-            battingStyle: 'Left Handed',
-            bowlingStyle: 'Left Arm Fast',
-            matches: 42,
-            runs: 580,
-            wickets: 78,
-            image: '/player2.jpg'
-        },
-        {
-            id: 3,
-            name: 'Michael Taylor',
-            role: 'All-Rounder',
-            category: 'allrounders',
-            battingStyle: 'Right Handed',
-            bowlingStyle: 'Right Arm Off Spin',
-            matches: 38,
-            runs: 1250,
-            wickets: 45,
-            image: '/player3.jpg'
-        },
-        {
-            id: 4,
-            name: 'David Clark',
-            role: 'Batsman',
-            category: 'batsmen',
-            battingStyle: 'Left Handed',
-            bowlingStyle: 'Right Arm Leg Spin',
-            matches: 36,
-            runs: 1780,
-            wickets: 5,
-            image: '/player4.jpg'
-        },
-        {
-            id: 5,
-            name: 'Robert Martinez',
-            role: 'Bowler',
-            category: 'bowlers',
-            battingStyle: 'Right Handed',
-            bowlingStyle: 'Right Arm Fast',
-            matches: 40,
-            runs: 320,
-            wickets: 65,
-            image: '/player5.jpg'
-        },
-        {
-            id: 6,
-            name: 'William Brown',
-            role: 'Wicketkeeper',
-            category: 'batsmen',
-            battingStyle: 'Right Handed',
-            bowlingStyle: '-',
-            matches: 32,
-            runs: 980,
-            wickets: 0,
-            image: '/player6.jpg'
-        },
-        {
-            id: 7,
-            name: 'Thomas Anderson',
-            role: 'Head Coach',
-            category: 'staff',
-            specialty: 'Batting Coach',
-            experience: '15 years',
-            achievements: 'Former National Team Player',
-            image: '/coach1.jpg'
-        },
-        {
-            id: 8,
-            name: 'Christopher Lee',
-            role: 'Bowling Coach',
-            category: 'staff',
-            specialty: 'Fast Bowling',
-            experience: '12 years',
-            achievements: '100+ International Wickets',
-            image: '/coach2.jpg'
-        },
-        // Adding more members to demonstrate pagination
-        {
-            id: 9,
-            name: 'Daniel White',
-            role: 'Batsman',
-            category: 'batsmen',
-            battingStyle: 'Right Handed',
-            bowlingStyle: 'Right Arm Medium',
-            matches: 28,
-            runs: 1250,
-            wickets: 3,
-            image: '/player7.jpg'
-        },
-        {
-            id: 10,
-            name: 'Matthew Harris',
-            role: 'Bowler',
-            category: 'bowlers',
-            battingStyle: 'Left Handed',
-            bowlingStyle: 'Left Arm Spin',
-            matches: 35,
-            runs: 210,
-            wickets: 52,
-            image: '/player8.jpg'
-        },
-        {
-            id: 11,
-            name: 'Andrew Thompson',
-            role: 'All-Rounder',
-            category: 'allrounders',
-            battingStyle: 'Right Handed',
-            bowlingStyle: 'Right Arm Fast Medium',
-            matches: 41,
-            runs: 980,
-            wickets: 38,
-            image: '/player9.jpg'
-        },
-        {
-            id: 12,
-            name: 'Kevin Martin',
-            role: 'Fielding Coach',
-            category: 'staff',
-            specialty: 'Fielding Specialist',
-            experience: '10 years',
-            achievements: 'National Fielding Award Winner',
-            image: '/coach3.jpg'
-        },
     ];
 
     const filteredMembers = activeCategory === 'all'
@@ -284,6 +169,22 @@ const TeamPage = () => {
             </div>
         );
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] flex items-center justify-center">
+                <div className="text-white text-xl">Loading players...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] flex items-center justify-center">
+                <div className="text-red-500 text-xl">Error: {error}</div>
+            </div>
+        );
+    }
 
     return (
         <div className='min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white'>
@@ -418,96 +319,100 @@ const TeamPage = () => {
 
                         {/* Main Content - Player Cards */}
                         <div className="flex-1">
-                            <motion.div
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
-                            >
-                                {paginatedMembers.map((member, index) => (
+                            {filteredMembers.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-xl text-gray-400">No players found in this category.</p>
+                                </div>
+                            ) : (
+                                <>
                                     <motion.div
-                                        key={member.id}
-                                        variants={itemVariants}
-                                        className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] shadow-lg"
-                                        whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.2)" }}
-                                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                        variants={containerVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6"
                                     >
-                                        {/* Player Image */}
-                                        <div className="relative h-64 overflow-hidden">
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
-                                            <Image
-                                                src={member.image || '/default-player.jpg'}
-                                                alt={member.name}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                            <div className="absolute bottom-4 left-4 z-20">
-                                                <h3 className="text-xl font-bold">{member.name}</h3>
-                                                <p className="text-[#D4AF37]">{member.role}</p>
-                                            </div>
-                                        </div>
+                                        {paginatedMembers.map((member) => (
+                                            <motion.div
+                                                key={member._id}
+                                                variants={itemVariants}
+                                                className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] shadow-lg"
+                                                whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.2)" }}
+                                                transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                            >
+                                                {/* Player Image */}
+                                                <div className="relative h-64 overflow-hidden">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
+                                                    <Image
+                                                        src={member.image || '/default-player.jpg'}
+                                                        alt={member.name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                    <div className="absolute bottom-4 left-4 z-20">
+                                                        <h3 className="text-xl font-bold">{member.name}</h3>
+                                                        <p className="text-[#D4AF37] capitalize">{member.category}</p>
+                                                    </div>
+                                                </div>
 
-                                        {/* Player Details */}
-                                        <div className="p-6">
-                                            {member.category !== 'staff' ? (
-                                                <>
-                                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                                        <div>
-                                                            <p className="text-gray-400 text-sm">Matches</p>
-                                                            <p className="font-bold text-lg">{member.matches}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-400 text-sm">Runs</p>
-                                                            <p className="font-bold text-lg">{member.runs}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-400 text-sm">Wickets</p>
-                                                            <p className="font-bold text-lg">{member.wickets}</p>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-gray-400 text-sm">Style</p>
-                                                            <p className="font-bold text-sm">{member.battingStyle}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
-                                                        <p className="text-gray-400 text-sm">Bowling</p>
-                                                        <p className="font-medium">{member.bowlingStyle}</p>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="mb-4">
-                                                        <p className="text-gray-400 text-sm">Specialty</p>
-                                                        <p className="font-bold">{member.specialty}</p>
-                                                    </div>
-                                                    <div className="mb-4">
-                                                        <p className="text-gray-400 text-sm">Experience</p>
-                                                        <p className="font-bold">{member.experience}</p>
-                                                    </div>
-                                                    <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
-                                                        <p className="text-gray-400 text-sm">Achievements</p>
-                                                        <p className="font-medium">{member.achievements}</p>
-                                                    </div>
-                                                </>
-                                            )}
+                                                {/* Player Details */}
+                                                <div className="p-6">
+                                                    {member.category !== 'staff' ? (
+                                                        <>
+                                                            <div className="mb-4">
+                                                                <p className="text-gray-400 text-sm">Batting Style</p>
+                                                                <p className="font-medium">{member.battingStyle || 'Not specified'}</p>
+                                                            </div>
+                                                            <div className="mb-4">
+                                                                <p className="text-gray-400 text-sm">Bowling Style</p>
+                                                                <p className="font-medium">{member.bowlingStyle || 'Not specified'}</p>
+                                                            </div>
+                                                            {member.specialties && member.specialties.length > 0 && (
+                                                                <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
+                                                                    <p className="text-gray-400 text-sm">Specialties</p>
+                                                                    <p className="font-medium">{member.specialties.join(', ')}</p>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="mb-4">
+                                                                <p className="text-gray-400 text-sm">Role</p>
+                                                                <p className="font-bold">{member.role}</p>
+                                                            </div>
+                                                            {member.experience && (
+                                                                <div className="mb-4">
+                                                                    <p className="text-gray-400 text-sm">Experience</p>
+                                                                    <p className="font-bold">{member.experience}</p>
+                                                                </div>
+                                                            )}
+                                                            {member.achievements && (
+                                                                <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
+                                                                    <p className="text-gray-400 text-sm">Achievements</p>
+                                                                    <p className="font-medium">{member.achievements}</p>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
 
-                                            {/* View Details Button */}
-                                            <Link href={`/team/${member.id}`} passHref>
-                                                <motion.button
-                                                    className="w-full bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg"
-                                                    whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(212, 175, 55, 0.4)" }}
-                                                    whileTap={{ scale: 0.98 }}
-                                                >
-                                                    View Details
-                                                </motion.button>
-                                            </Link>
-                                        </div>
+                                                    {/* View Details Button */}
+                                                    <Link href={`/player/${member.username}`} passHref>
+                                                        <motion.button
+                                                            className="w-full bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg"
+                                                            whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(212, 175, 55, 0.4)" }}
+                                                            whileTap={{ scale: 0.98 }}
+                                                        >
+                                                            View Details
+                                                        </motion.button>
+                                                    </Link>
+                                                </div>
+                                            </motion.div>
+                                        ))}
                                     </motion.div>
-                                ))}
-                            </motion.div>
 
-                            {/* Pagination Controls */}
-                            <PaginationControls />
+                                    {/* Pagination Controls */}
+                                    <PaginationControls />
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -89,3 +89,27 @@ export async function POST(request) {
     return Response.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+
+
+export async function GET() {
+  try {
+    const { db } = await connectToDatabase();
+    
+    // Fetch all players
+    const players = await db.collection('players').find({}).toArray();
+    
+    // Remove sensitive information
+    const sanitizedPlayers = players.map(player => {
+      const { password, ...sanitizedPlayer } = player;
+      return sanitizedPlayer;
+    });
+    
+    return Response.json(sanitizedPlayers);
+  } catch (error) {
+    console.error('Error fetching players:', error);
+    return Response.json(
+      { message: 'Internal server error', error: error.message },
+      { status: 500 }
+    );
+  }
+}
