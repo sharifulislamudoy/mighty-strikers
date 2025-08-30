@@ -54,7 +54,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [showImageUpload, setShowImageUpload] = useState(false);
-    const [tempImage, setTempImage] = useState('');
     const [tempAge, setTempAge] = useState('');
     const [currentPlayer, setCurrentPlayer] = useState(player);
     const [currentPlayerDetails, setCurrentPlayerDetails] = useState(playerDetails);
@@ -64,6 +63,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
+    const [isUpdatingAge, setIsUpdatingAge] = useState(false);
 
     // Add state for toast notifications
     const [toasts, setToasts] = useState([]);
@@ -367,23 +367,62 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         }
     };
 
+    const updatePlayerAgeInDatabase = async (age) => {
+        try {
+            const response = await fetch('/api/players/update-age', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: currentPlayer.username,
+                    age: age
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update player age');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Player age update error:", error);
+            throw error;
+        }
+    };
+
     const handleAgeChange = () => {
         setTempAge(currentPlayer.age.toString());
         setAgeError('');
     };
 
-    const confirmAgeChange = () => {
+    const confirmAgeChange = async () => {
         const ageNum = parseInt(tempAge);
         if (isNaN(ageNum) || ageNum < 15 || ageNum > 50) {
             setAgeError('Please enter a valid age (15-50)');
             return;
         }
 
+        setIsUpdatingAge(true);
         setAgeError('');
-        setCurrentPlayer(prev => ({ ...prev, age: ageNum }));
-        setTempAge('');
-        // Show toast instead of alert
-        addToast('Age updated successfully!', 'success');
+
+        try {
+            // Update age in database
+            await updatePlayerAgeInDatabase(ageNum);
+
+            // Update local state
+            setCurrentPlayer(prev => ({ ...prev, age: ageNum }));
+            setTempAge('');
+
+            // Show success toast
+            addToast('Age updated successfully!', 'success');
+        } catch (error) {
+            console.error("Age change error:", error);
+            setAgeError('Failed to update age. Please try again.');
+            addToast('Failed to update age. Please try again.', 'error');
+        } finally {
+            setIsUpdatingAge(false);
+        }
     };
 
     if (isLoading) {
@@ -546,7 +585,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                             <p className="font-bold">{currentPlayer.age} years</p>
                                             <button
                                                 onClick={handleAgeChange}
-                                                className="w-5 h-5 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-xs font-bold"
+                                                className="w-5 h-5 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-xs font-bold hover:bg-yellow-500 transition-colors"
                                             >
                                                 ✎
                                             </button>
@@ -961,29 +1000,44 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
             {/* Image Change Modal */}
             {showImageUpload && (
                 <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-                    <div className="bg-[#1A1A1A] p-6 rounded-lg w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Change Profile Image</h3>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#1A1A1A] p-6 rounded-2xl border border-[#D4AF37] w-full max-w-md"
+                    >
+                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Change Profile Image</h3>
 
                         {filePreview ? (
                             <div className="mb-4 flex justify-center">
                                 <img
                                     src={filePreview}
                                     alt="Preview"
-                                    className="w-32 h-32 rounded-full object-cover border-2 border-[#D4AF37]"
+                                    className="w-70 h-55 object-cover rounded-lg border-2 border-[#D4AF37]"
                                 />
                             </div>
                         ) : (
                             <div className="mb-4 flex justify-center">
-                                <div className="w-32 h-32 rounded-full bg-[#2A2A2A] flex items-center justify-center border-2 border-dashed border-gray-600">
-                                    <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                <div className="w-48 h-36 rounded-lg bg-[#2A2A2A] flex items-center justify-center border-2 border-dashed border-[#D4AF37]">
+                                    <svg
+                                        className="w-12 h-12 text-gray-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                                        />
                                     </svg>
                                 </div>
                             </div>
                         )}
 
+
                         <label className="block mb-4">
-                            <div className="px-4 py-2 bg-[#2A2A2A] border border-[#3A3A3A] rounded-lg text-center cursor-pointer hover:bg-[#3A3A3A] transition-colors">
+                            <div className="px-4 py-2 bg-[#2A2A2A] border border-[#D4AF37] rounded-lg text-center cursor-pointer hover:bg-[#3A3A3A] transition-colors text-[#D4AF37]">
                                 Select Image
                             </div>
                             <input
@@ -1013,7 +1067,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                             </button>
                             <button
                                 onClick={confirmImageChange}
-                                className="px-4 py-2 bg-[#D4AF37] text-black rounded-lg hover:bg-yellow-500 transition-colors flex items-center"
+                                className="px-4 py-2 bg-[#D4AF37] text-black rounded-lg hover:bg-yellow-500 transition-colors flex items-center justify-center min-w-[120px]"
                                 disabled={isUploading || !selectedFile}
                             >
                                 {isUploading ? (
@@ -1027,9 +1081,10 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 ) : 'Upload Image'}
                             </button>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             )}
+
 
             {/* Age Change Modal */}
             {tempAge && (
@@ -1047,6 +1102,8 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 value={tempAge}
                                 onChange={(e) => setTempAge(e.target.value)}
                                 className="w-full bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-3 py-2 text-white"
+                                min="15"
+                                max="50"
                             />
                             {ageError && <p className="text-red-400 text-sm mt-2">{ageError}</p>}
                         </div>
@@ -1054,14 +1111,24 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                             <button
                                 onClick={() => setTempAge('')}
                                 className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                                disabled={isUpdatingAge}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmAgeChange}
-                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center min-w-[100px]"
+                                disabled={isUpdatingAge}
                             >
-                                Change Age
+                                {isUpdatingAge ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Updating...
+                                    </>
+                                ) : 'Change Age'}
                             </button>
                         </div>
                     </motion.div>
