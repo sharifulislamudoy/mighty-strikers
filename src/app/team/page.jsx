@@ -14,6 +14,7 @@ const TeamPage = () => {
     const [teamMembers, setTeamMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [totalPlayers, setTotalPlayers] = useState(0); // New state for total players count
 
     // Fetch team members from API
     useEffect(() => {
@@ -28,6 +29,7 @@ const TeamPage = () => {
                 
                 const players = await response.json();
                 setTeamMembers(players);
+                setTotalPlayers(players.length); // Set the total players count
             } catch (err) {
                 console.error('Error fetching players:', err);
                 setError(err.message);
@@ -106,9 +108,8 @@ const TeamPage = () => {
     const teamCategories = [
         { id: 'all', name: 'All Players' },
         { id: 'Batsman', name: 'Batsmen' },
-        { id: 'Bowler', name: 'Bowlers' },
-        { id: 'All-Rounder', name: 'All-Rounders' },
-        { id: 'staff', name: 'Support Staff' },
+        { id: 'Bowlers', name: 'Bowlers' },
+        { id: 'All-Rounder', name: 'All-Rounder' },
     ];
 
     const filteredMembers = activeCategory === 'all'
@@ -236,13 +237,19 @@ const TeamPage = () => {
                         transition={{ duration: 0.7 }}
                         className="text-center mb-10"
                     >
-                        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        <h1 className="text-2xl md:text-4xl font-bold mb-6">
                             <span className="text-white">Meet The </span>
                             <span className="text-[#D4AF37]">Mighty Strikers</span>
                         </h1>
-                        <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+                        <p className="text-lg md:text-xl text-gray-300 w-full mx-auto">
                             A team of passionate cricketers dedicated to excellence, sportsmanship, and the spirit of the game.
                         </p>
+                        
+                        {/* Display total players count */}
+                        <div className="mt-6 inline-block bg-[#1a1a1a] px-4 py-2 rounded-lg">
+                            <span className="text-[#D4AF37] font-bold">{totalPlayers}</span>
+                            <span className="text-gray-300 ml-2">Total Players</span>
+                        </div>
                     </motion.div>
 
                     {/* Mobile Filter Toggle Button */}
@@ -319,6 +326,16 @@ const TeamPage = () => {
 
                         {/* Main Content - Player Cards */}
                         <div className="flex-1">
+                            {/* Category and count header */}
+                            <div className="mb-6 flex justify-between items-center">
+                                <h2 className="text-xl md:text-2xl font-bold text-[#D4AF37]">
+                                    {teamCategories.find(cat => cat.id === activeCategory)?.name}
+                                </h2>
+                                <span className="text-gray-400">
+                                    Showing {filteredMembers.length} of {totalPlayers} players
+                                </span>
+                            </div>
+
                             {filteredMembers.length === 0 ? (
                                 <div className="text-center py-12">
                                     <p className="text-xl text-gray-400">No players found in this category.</p>
@@ -356,17 +373,16 @@ const TeamPage = () => {
 
                                                 {/* Player Details */}
                                                 <div className="p-6">
-                                                        <>
-                                                            <div className="mb-4">
-                                                                <p className="text-gray-400 text-sm">Batting Style</p>
-                                                                <p className="font-medium">{member.battingStyle || 'Not specified'}</p>
-                                                            </div>
-                                                            <div className="mb-4">
-                                                                <p className="text-gray-400 text-sm">Bowling Style</p>
-                                                                <p className="font-medium">{member.bowlingStyle || 'Not specified'}</p>
-                                                            </div>
-                                                        </>
-
+                                                    <>
+                                                        <div className="mb-4">
+                                                            <p className="text-gray-400 text-sm">Batting Style</p>
+                                                            <p className="font-medium">{member.battingStyle || 'Not specified'}</p>
+                                                        </div>
+                                                        <div className="mb-4">
+                                                            <p className="text-gray-400 text-sm">Bowling Style</p>
+                                                            <p className="font-medium">{member.bowlingStyle || 'Not specified'}</p>
+                                                        </div>
+                                                    </>
 
                                                     {/* View Details Button */}
                                                     <Link href={`/player/${member.username}`} passHref>

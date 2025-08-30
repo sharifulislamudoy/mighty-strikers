@@ -5,16 +5,31 @@ import { useRef, useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-
 const HeroSection = () => {
     const constraintsRef = useRef(null);
     const [isClient, setIsClient] = useState(false);
+    const [playersCount, setPlayersCount] = useState(18); // Default value
     const router = useRouter();
 
     useEffect(() => {
         setIsClient(true);
+        
+        // Fetch players count from API
+        const fetchPlayersCount = async () => {
+            try {
+                const response = await fetch('/api/players');
+                if (response.ok) {
+                    const players = await response.json();
+                    setPlayersCount(players.length);
+                }
+            } catch (error) {
+                console.error('Failed to fetch players count:', error);
+                // Keep the default value if fetch fails
+            }
+        };
+        
+        fetchPlayersCount();
     }, []);
-
 
     const handleTeamNavigation = () => {
         router.push('/team')
@@ -216,7 +231,7 @@ const HeroSection = () => {
                             </div>
 
                             <div className="text-center">
-                                <div className="text-3xl font-bold text-[#D4AF37]">18</div>
+                                <div className="text-3xl font-bold text-[#D4AF37]">{playersCount}</div>
                                 <div className="text-white">Players</div>
                             </div>
                         </motion.div>

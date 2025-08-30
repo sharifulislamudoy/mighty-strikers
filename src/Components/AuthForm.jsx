@@ -35,6 +35,7 @@ const AuthForm = () => {
   ];
   const battingStyles = ['Right Handed', 'Left Handed'];
   const bowlingStyles = ['Right Arm Fast', 'Right Arm Medium', 'Right Arm Spin', 'Left Arm Fast', 'Left Arm Medium', 'Left Arm Spin'];
+  const categoryOptions = ['Batsman', 'Bowlers', 'All-Rounder'];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -131,7 +132,7 @@ const AuthForm = () => {
         if (!userResponse.ok) {
           throw new Error('Failed to fetch user data');
         }
-        
+
         const userData = await userResponse.json();
         const username = userData.username;
 
@@ -457,15 +458,20 @@ const AuthForm = () => {
                       <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-2">
                         Preferred Role
                       </label>
-                      <input
+                      <select
                         id="category"
                         name="category"
-                        type="text"
                         value={formData.category}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
-                        placeholder="e.g. Captain & Batsman"
-                      />
+                        className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
+                      >
+                        <option value="">Select your role</option>
+                        {categoryOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div>
