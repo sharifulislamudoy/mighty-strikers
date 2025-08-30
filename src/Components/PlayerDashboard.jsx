@@ -61,6 +61,9 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [imageError, setImageError] = useState('');
     const [ageError, setAgeError] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [filePreview, setFilePreview] = useState(null);
 
     // Add state for toast notifications
     const [toasts, setToasts] = useState([]);
@@ -221,28 +224,147 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const handleImageChange = () => {
         setShowImageUpload(true);
         setImageError('');
+        setSelectedFile(null);
+        setFilePreview(null);
     };
 
-    const confirmImageChange = () => {
-        if (!tempImage) {
-            setImageError('Please enter an image URL');
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Check if file is an image
+        if (!file.type.startsWith('image/')) {
+            setImageError('Please select an image file');
             return;
         }
 
-        // Basic URL validation
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setImageError('File size must be less than 5MB');
+            return;
+        }
+
+        setSelectedFile(file);
+        setImageError('');
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setFilePreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const uploadImageToCloudinary = async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "react_unsigned");
+        formData.append("cloud_name", "dohhfubsa");
+
         try {
-            new URL(tempImage);
-            setImageError('');
-        } catch (e) {
-            setImageError('Please enter a valid URL');
+            const response = await fetch(
+                `https://api.cloudinary.com/v1_1/dohhfubsa/image/upload`,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to upload image');
+            }
+
+            const data = await response.json();
+            return data.secure_url;
+        } catch (error) {
+            console.error("Image upload error:", error);
+            throw error;
+        }
+    };
+
+    const updatePlayerImage = async (imageUrl) => {
+        try {
+            const response = await fetch('/api/players/update-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: currentPlayer.username,
+                    image: imageUrl
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update player image');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Player image update error:", error);
+            throw error;
+        }
+    };
+
+    const addToGallery = async (imageUrl) => {
+        try {
+            const response = await fetch('/api/gallery/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: currentPlayer.username,
+                    name: currentPlayer.name,
+                    image: imageUrl
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add image to gallery');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Gallery addition error:", error);
+            throw error;
+        }
+    };
+
+    const confirmImageChange = async () => {
+        if (!selectedFile) {
+            setImageError('Please select an image file');
             return;
         }
 
-        setCurrentPlayer(prev => ({ ...prev, image: tempImage }));
-        setShowImageUpload(false);
-        setTempImage('');
-        // Show toast instead of alert
-        addToast('Image changed successfully!', 'success');
+        setIsUploading(true);
+        setImageError('');
+
+        try {
+            // 1. Upload image to Cloudinary
+            const imageUrl = await uploadImageToCloudinary(selectedFile);
+
+            // 2. Update player's image in database
+            await updatePlayerImage(imageUrl);
+
+            // 3. Add to gallery collection
+            await addToGallery(imageUrl);
+
+            // 4. Update local state
+            setCurrentPlayer(prev => ({ ...prev, image: imageUrl }));
+            setShowImageUpload(false);
+            setSelectedFile(null);
+            setFilePreview(null);
+
+            // 5. Show success message
+            addToast('Image updated successfully!', 'success');
+        } catch (error) {
+            console.error("Image change error:", error);
+            setImageError('Failed to upload image. Please try again.');
+            addToast('Failed to upload image. Please try again.', 'error');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleAgeChange = () => {
@@ -838,39 +960,74 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
 
             {/* Image Change Modal */}
             {showImageUpload && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="bg-[#1a1a1a] p-6 rounded-2xl border border-[#D4AF37] max-w-md w-full mx-4"
-                    >
-                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Change Player Image</h3>
-                        <div className="mb-4">
-                            <label className="block text-gray-400 mb-2">Image URL</label>
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                    <div className="bg-[#1A1A1A] p-6 rounded-lg w-full max-w-md">
+                        <h3 className="text-xl font-bold mb-4">Change Profile Image</h3>
+
+                        {filePreview ? (
+                            <div className="mb-4 flex justify-center">
+                                <img
+                                    src={filePreview}
+                                    alt="Preview"
+                                    className="w-32 h-32 rounded-full object-cover border-2 border-[#D4AF37]"
+                                />
+                            </div>
+                        ) : (
+                            <div className="mb-4 flex justify-center">
+                                <div className="w-32 h-32 rounded-full bg-[#2A2A2A] flex items-center justify-center border-2 border-dashed border-gray-600">
+                                    <svg className="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                </div>
+                            </div>
+                        )}
+
+                        <label className="block mb-4">
+                            <div className="px-4 py-2 bg-[#2A2A2A] border border-[#3A3A3A] rounded-lg text-center cursor-pointer hover:bg-[#3A3A3A] transition-colors">
+                                Select Image
+                            </div>
                             <input
-                                type="text"
-                                value={tempImage}
-                                onChange={(e) => setTempImage(e.target.value)}
-                                placeholder="Enter image URL"
-                                className="w-full bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-3 py-2 text-white"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileSelect}
+                                className="hidden"
                             />
-                            {imageError && <p className="text-red-400 text-sm mt-2">{imageError}</p>}
-                        </div>
-                        <div className="flex justify-end gap-3">
+                        </label>
+
+                        {imageError && (
+                            <div className="text-red-400 text-sm mb-4">{imageError}</div>
+                        )}
+
+                        <div className="flex justify-end space-x-3">
                             <button
-                                onClick={() => setShowImageUpload(false)}
+                                onClick={() => {
+                                    setShowImageUpload(false);
+                                    setImageError('');
+                                    setSelectedFile(null);
+                                    setFilePreview(null);
+                                }}
                                 className="px-4 py-2 bg-gray-600 rounded-lg hover:bg-gray-700 transition-colors"
+                                disabled={isUploading}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmImageChange}
-                                className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                                className="px-4 py-2 bg-[#D4AF37] text-black rounded-lg hover:bg-yellow-500 transition-colors flex items-center"
+                                disabled={isUploading || !selectedFile}
                             >
-                                Change Image
+                                {isUploading ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Uploading...
+                                    </>
+                                ) : 'Upload Image'}
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             )}
 
