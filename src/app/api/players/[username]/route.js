@@ -5,7 +5,8 @@ export async function GET(request, { params }) {
     const { db } = await connectToDatabase();
     const playersCollection = db.collection('players');
     
-    const { username } = params;
+    // Await the params object before destructuring
+    const { username } = await params;
     
     // Find player by username
     const player = await playersCollection.findOne({ username });

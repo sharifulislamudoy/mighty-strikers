@@ -2,7 +2,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 
 export async function POST(request, { params }) {
   try {
-    const { username } = params;
+    const { username } =await params;
     const { liked } = await request.json();
     
     console.log('API Called with username:', username);
