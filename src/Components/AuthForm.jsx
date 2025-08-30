@@ -21,7 +21,7 @@ const AuthForm = () => {
     battingStyle: '',
     bowlingStyle: '',
     age: '',
-    profileUrl: '', // New field added
+    profileUrl: '',
   });
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,7 +116,7 @@ const AuthForm = () => {
       };
 
       if (isLogin) {
-        // Use NextAuth signIn for login
+        // Login logic
         const result = await signIn('credentials', {
           redirect: false,
           phone: formData.phone,
@@ -127,7 +127,6 @@ const AuthForm = () => {
           throw new Error(result.error);
         }
 
-        // After successful login, get the user data to get the username
         const userResponse = await fetch(`/api/players/by-phone/${formData.phone}`);
         if (!userResponse.ok) {
           throw new Error('Failed to fetch user data');
@@ -136,15 +135,12 @@ const AuthForm = () => {
         const userData = await userResponse.json();
         const username = userData.username;
 
-        // Show success toast for login
         toast.success('Login successful! Redirecting...');
-
-        // Redirect to dynamic dashboard route
         setTimeout(() => {
           router.push(`/player/dashboard/${username}`);
         }, 1500);
       } else {
-        // Send registration data to your API
+        // Registration logic
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: {
@@ -159,10 +155,24 @@ const AuthForm = () => {
           throw new Error(result.message || 'Something went wrong');
         }
 
-        // Show success toast for registration
+        // Save to gallery if photo exists
+        if (imageUrl) {
+          await fetch('/api/gallery/add', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username: result.username,
+              name: formData.name,
+              image: imageUrl
+            }),
+          });
+        }
+
         toast.success(`Registration successful! Your username is: ${result.username}. Logging you in...`);
 
-        // After successful registration, automatically sign in the user
+        // Auto sign in after registration
         const signInResult = await signIn('credentials', {
           redirect: false,
           phone: formData.phone,
@@ -185,18 +195,17 @@ const AuthForm = () => {
           battingStyle: '',
           bowlingStyle: '',
           age: '',
-          profileUrl: '', // Reset the new field
+          profileUrl: '',
         });
         setPreviewUrl(null);
 
-        // Redirect to dynamic dashboard route
+        // Redirect to dashboard
         setTimeout(() => {
           router.push(`/player/dashboard/${result.username}`);
         }, 1500);
       }
     } catch (err) {
       setError(err.message);
-      // Show error toast
       toast.error(err.message || 'An error occurred. Please try again.');
       console.error("Submission failed:", err);
     } finally {
@@ -206,7 +215,6 @@ const AuthForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white flex items-center justify-center p-4">
-      {/* Toast Container */}
       <Toaster
         position="top-center"
         toastOptions={{
@@ -437,14 +445,13 @@ const AuthForm = () => {
                           </svg>
                         ) : (
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c极速4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                           </svg>
                         )}
                       </button>
                     </div>
                   </div>
 
-                  {/* Preferred Role and Category side by side on large screens */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-2">
@@ -472,7 +479,7 @@ const AuthForm = () => {
                         required
                         value={formData.age}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f极速c22c] focus:border-transparent transition-all"
                         placeholder="e.g. 28"
                         min="16"
                         max="50"
@@ -480,7 +487,6 @@ const AuthForm = () => {
                     </div>
                   </div>
 
-                  {/* Batting Style and Bowling Style side by side on large screens */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="battingStyle" className="block text-sm font-medium text-gray-300 mb-2">
@@ -489,9 +495,9 @@ const AuthForm = () => {
                       <select
                         id="battingStyle"
                         name="battingStyle"
-                        value={formData.battingStyle}
+                        value极速={formData.battingStyle}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
+                        className="w-full px极速4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
                       >
                         <option value="">Select batting style</option>
                         {battingStyles.map((style) => (
@@ -523,7 +529,6 @@ const AuthForm = () => {
                     </div>
                   </div>
 
-                  {/* CrickHeroes Profile URL */}
                   <div>
                     <label htmlFor="profileUrl" className="block text-sm font-medium text-gray-300 mb-2">
                       Your CrickHeroes Profile URL
@@ -534,7 +539,7 @@ const AuthForm = () => {
                       type="url"
                       value={formData.profileUrl}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 bg-[#1极速A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border极速-transparent transition-all"
                       placeholder="e.g., https://crickheroes.com/your-profile"
                     />
                     <p className="text-xs text-gray-500 mt-2">
@@ -566,7 +571,7 @@ const AuthForm = () => {
                         </motion.div>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
+                    <p className="text-xs text-gray极速-500 mt-2">
                       Selected: {formData.specialties.join(', ') || 'None'}
                     </p>
                   </div>
@@ -590,7 +595,7 @@ const AuthForm = () => {
                         ) : (
                           <div className="w-16 h-16 rounded-full bg-[#1A1A1A] border-2 border-dashed border-[#2A2A2A] flex items-center justify-center">
                             <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12极速6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
                           </div>
                         )}
@@ -612,7 +617,6 @@ const AuthForm = () => {
               )}
             </AnimatePresence>
 
-            {/* Submit Button */}
             <motion.button
               type="submit"
               disabled={isSubmitting}

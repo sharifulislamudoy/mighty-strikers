@@ -74,7 +74,7 @@ export async function POST(request) {
       battingStyle,
       bowlingStyle,
       age: parseInt(age),
-      profileUrl: profileUrl || '', // Add this field
+      profileUrl: profileUrl || '',
       role: 'player',
       likes: 0,
       createdAt: new Date(),
