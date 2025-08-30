@@ -356,7 +356,6 @@ const TeamPage = () => {
 
                                                 {/* Player Details */}
                                                 <div className="p-6">
-                                                    {member.category !== 'staff' ? (
                                                         <>
                                                             <div className="mb-4">
                                                                 <p className="text-gray-400 text-sm">Batting Style</p>
@@ -366,33 +365,8 @@ const TeamPage = () => {
                                                                 <p className="text-gray-400 text-sm">Bowling Style</p>
                                                                 <p className="font-medium">{member.bowlingStyle || 'Not specified'}</p>
                                                             </div>
-                                                            {member.specialties && member.specialties.length > 0 && (
-                                                                <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
-                                                                    <p className="text-gray-400 text-sm">Specialties</p>
-                                                                    <p className="font-medium">{member.specialties.join(', ')}</p>
-                                                                </div>
-                                                            )}
                                                         </>
-                                                    ) : (
-                                                        <>
-                                                            <div className="mb-4">
-                                                                <p className="text-gray-400 text-sm">Role</p>
-                                                                <p className="font-bold">{member.role}</p>
-                                                            </div>
-                                                            {member.experience && (
-                                                                <div className="mb-4">
-                                                                    <p className="text-gray-400 text-sm">Experience</p>
-                                                                    <p className="font-bold">{member.experience}</p>
-                                                                </div>
-                                                            )}
-                                                            {member.achievements && (
-                                                                <div className="bg-[#0A0A0A] p-3 rounded-lg mb-4">
-                                                                    <p className="text-gray-400 text-sm">Achievements</p>
-                                                                    <p className="font-medium">{member.achievements}</p>
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    )}
+
 
                                                     {/* View Details Button */}
                                                     <Link href={`/player/${member.username}`} passHref>
