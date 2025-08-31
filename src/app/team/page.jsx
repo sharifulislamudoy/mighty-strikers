@@ -237,7 +237,7 @@ const TeamPage = () => {
                         transition={{ duration: 0.7 }}
                         className="text-center mb-10"
                     >
-                        <h1 className="text-2xl md:text-4xl font-bold mb-6">
+                        <h1 className=" text-3xl md:text-4xl font-bold mb-6">
                             <span className="text-white">Meet The </span>
                             <span className="text-[#D4AF37]">Mighty Strikers</span>
                         </h1>
