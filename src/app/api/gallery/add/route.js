@@ -24,6 +24,8 @@ export async function POST(request) {
             username,
             name,
             image,
+            category: 'profile-photo',
+            title: 'Profile',
             createdAt: new Date()
         });
 

@@ -94,6 +94,7 @@ const GalleryPage = () => {
         { id: 'matches', name: 'Match Moments' },
         { id: 'winning', name: 'Winning Moments' },
         { id: 'team', name: 'Team Photos' },
+        { id: 'profile', name: 'Profile Picture' }
     ];
 
     const filteredImages = activeCategory === 'all'
