@@ -1,9 +1,9 @@
 // src/app/api/gallery/like/route.js
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getServerSession } from 'next-auth/next';
-import { ObjectId } from 'mongodb';
+import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
+import { ObjectId } from 'mongodb';
 
 export async function POST(req) {
   try {
