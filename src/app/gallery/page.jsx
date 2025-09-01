@@ -395,7 +395,7 @@ const GalleryPage = () => {
                                 <div className="p-6">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <h3 className="text-2xl font-bold">{selectedImage.title || 'Untitled'}</h3>
+                                            <h3 className="text-2xl font-bold">{selectedImage.title || 'Profile'}</h3>
                                             <p className="text-[#D4AF37]">
                                                 {selectedImage.date || new Date(selectedImage.createdAt).toLocaleDateString()}
                                             </p>
