@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { handleDownload } from '@/utils/downloadImage';
+import { useSession } from 'next-auth/react';
+import toast, { Toaster } from 'react-hot-toast';
 
 const GalleryPage = () => {
+    const { data: session } = useSession();
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedImage, setSelectedImage] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -13,6 +16,14 @@ const GalleryPage = () => {
     const [loadedImages, setLoadedImages] = useState({});
     const [galleryImages, setGalleryImages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+    const [uploadData, setUploadData] = useState({
+        category: 'profile',
+        title: '',
+        images: [],
+        previews: []
+    });
+    const [isUploading, setIsUploading] = useState(false);
 
     // Check screen size
     useEffect(() => {
@@ -40,9 +51,11 @@ const GalleryPage = () => {
                     setGalleryImages(data.images || []);
                 } else {
                     console.error('Failed to fetch gallery images:', data.message);
+                    toast.error('Failed to load gallery images');
                 }
             } catch (error) {
                 console.error('Error fetching gallery images:', error);
+                toast.error('Error loading gallery images');
             } finally {
                 setIsLoading(false);
             }
@@ -51,6 +64,96 @@ const GalleryPage = () => {
         fetchGalleryImages();
     }, []);
 
+    // Handle image selection for upload
+    const handleImageSelect = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        const newPreviews = [];
+        const newImages = [];
+
+        files.forEach(file => {
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                newPreviews.push(e.target.result);
+                if (newPreviews.length === files.length) {
+                    setUploadData(prev => ({
+                        ...prev,
+                        previews: [...prev.previews, ...newPreviews],
+                        images: [...prev.images, ...newImages]
+                    }));
+                }
+            };
+            reader.readAsDataURL(file);
+            newImages.push(file);
+        });
+    };
+
+    // Remove selected image from upload
+    const removeImage = (index) => {
+        setUploadData(prev => ({
+            ...prev,
+            previews: prev.previews.filter((_, i) => i !== index),
+            images: prev.images.filter((_, i) => i !== index)
+        }));
+    };
+
+    // Handle upload to Cloudinary and then to backend
+    const handleUpload = async () => {
+        if (uploadData.images.length === 0) {
+            toast.error('Please select at least one image');
+            return;
+        }
+
+        setIsUploading(true);
+        const uploadToast = toast.loading(`Uploading ${uploadData.images.length} image${uploadData.images.length !== 1 ? 's' : ''}...`);
+
+        try {
+            const uploadPromises = uploadData.images.map(async (image) => {
+                const formData = new FormData();
+                formData.append('file', image);
+                formData.append('username', session.user.username);
+                formData.append('name', session.user.name);
+                formData.append('category', uploadData.category);
+                formData.append('title', uploadData.title || '');
+
+                const response = await fetch('/api/gallery/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Upload failed');
+                }
+
+                return response.json();
+            });
+
+            await Promise.all(uploadPromises);
+
+            toast.success('Images uploaded successfully!', { id: uploadToast });
+            setShowUploadModal(false);
+            setUploadData({
+                category: 'profile',
+                title: '',
+                images: [],
+                previews: []
+            });
+
+            // Refresh gallery
+            const response = await fetch('/api/gallery');
+            const data = await response.json();
+            if (response.ok) {
+                setGalleryImages(data.images || []);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Failed to upload images. Please try again.', { id: uploadToast });
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     // Predefined particle positions
     const particlePositions = useMemo(() => [
@@ -77,16 +180,18 @@ const GalleryPage = () => {
                 await navigator.share({
                     title,
                     text: "Have a look at this image",
-                    url, // Cloudinary image URL
+                    url,
                 });
+                toast.success('Shared successfully!');
             } catch (err) {
-                console.error("Share failed:", err);
+                if (err.name !== 'AbortError') {
+                    toast.error('Failed to share');
+                }
             }
         } else {
-            alert("Sharing not supported on this browser.");
+            toast.error('Sharing not supported on this browser');
         }
     };
-
 
     // Gallery categories
     const galleryCategories = [
@@ -100,7 +205,6 @@ const GalleryPage = () => {
     const filteredImages = activeCategory === 'all'
         ? galleryImages
         : galleryImages.filter(image => image.category === activeCategory);
-
 
     // Animation variants
     const containerVariants = {
@@ -140,6 +244,37 @@ const GalleryPage = () => {
 
     return (
         <div className='min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white'>
+            {/* Hot Toast Container */}
+            <Toaster
+                position="top-center"
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#1A1A1A',
+                        color: '#fff',
+                        border: '1px solid #2A2A2A',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#f0c22c',
+                            secondary: '#1A1A1A',
+                        },
+                    },
+                    error: {
+                        iconTheme: {
+                            primary: '#ef4444',
+                            secondary: '#1A1A1A',
+                        },
+                    },
+                    loading: {
+                        iconTheme: {
+                            primary: '#f0c22c',
+                            secondary: '#1A1A1A',
+                        },
+                    },
+                }}
+            />
+
             <div className="w-11/12 mx-auto pt-20 pb-16">
                 {/* Animated background elements */}
                 <div className="absolute inset-0 z-0 overflow-hidden">
@@ -195,6 +330,21 @@ const GalleryPage = () => {
                         <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
                             Relive the greatest moments, celebrations, and behind-the-scenes action of the Mighty Strikers.
                         </p>
+
+                        {/* Upload Button - Only show if user is logged in */}
+                        {session && (
+                            <motion.button
+                                onClick={() => setShowUploadModal(true)}
+                                className="mt-6 bg-[#D4AF37] text-black font-semibold py-2 px-6 rounded-lg flex items-center gap-2 mx-auto"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Upload Photos
+                            </motion.button>
+                        )}
                     </motion.div>
 
                     {/* Mobile Filter Toggle Button */}
@@ -440,7 +590,7 @@ const GalleryPage = () => {
                                             className="flex items-center gap-2 text-gray-400 hover:text-white"
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                                <path strokeLinecap="round" strokeLinejoin='round' strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                             </svg>
                                             <span>Download</span>
                                         </button>
@@ -451,6 +601,153 @@ const GalleryPage = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                             </svg>
                                             <span>Share</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Upload Modal */}
+            <AnimatePresence>
+                {showUploadModal && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+                            onClick={() => !isUploading && setShowUploadModal(false)}
+                        >
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] w-full max-w-2xl max-h-[90vh] flex flex-col"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="p-6 overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h2 className="text-2xl font-bold text-[#D4AF37]">Upload Photos</h2>
+                                        <button
+                                            onClick={() => !isUploading && setShowUploadModal(false)}
+                                            className="text-gray-400 hover:text-white"
+                                            disabled={isUploading}
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        {/* Category Selection */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                Category
+                                            </label>
+                                            <select
+                                                value={uploadData.category}
+                                                onChange={(e) => setUploadData({ ...uploadData, category: e.target.value })}
+                                                className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                                                disabled={isUploading}
+                                            >
+                                                {galleryCategories.filter(cat => cat.id !== 'all').map(category => (
+                                                    <option key={category.id} value={category.id}>
+                                                        {category.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Title Input */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                Title (for all images)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={uploadData.title}
+                                                onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
+                                                placeholder="Enter a title for your images"
+                                                className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                                                disabled={isUploading}
+                                            />
+                                        </div>
+
+                                        {/* Image Upload */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                                Select Images
+                                            </label>
+                                            <div className="flex items-center justify-center w-full">
+                                                <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${isUploading ? 'border-gray-600 cursor-not-allowed' : 'border-gray-600 hover:border-[#D4AF37]'} bg-[#2a2a2a]`}>
+                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                        <svg className="w-8 h-8 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                        </svg>
+                                                        <p className="mb-2 text-sm text-gray-400">Click to upload or drag and drop</p>
+                                                        <p className="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                                                    </div>
+                                                    <input
+                                                        type="file"
+                                                        multiple
+                                                        className="hidden"
+                                                        onChange={handleImageSelect}
+                                                        accept="image/*"
+                                                        disabled={isUploading}
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {/* Image Previews */}
+                                        {uploadData.previews.length > 0 && (
+                                            <div>
+                                                <h3 className="text-sm font-medium text-gray-300 mb-3">Selected Images ({uploadData.previews.length})</h3>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {uploadData.previews.map((preview, index) => (
+                                                        <div key={index} className="relative group">
+                                                            <img
+                                                                src={preview}
+                                                                alt={`Preview ${index + 1}`}
+                                                                className="w-full h-24 object-cover rounded-lg"
+                                                            />
+                                                            {!isUploading && (
+                                                                <button
+                                                                    onClick={() => removeImage(index)}
+                                                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                    </svg>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Upload Button */}
+                                        <button
+                                            onClick={handleUpload}
+                                            disabled={isUploading || uploadData.images.length === 0}
+                                            className={`w-full py-3 px-4 rounded-lg font-semibold ${isUploading || uploadData.images.length === 0 ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#D4AF37] hover:bg-[#c59a2f] text-black'}`}
+                                        >
+                                            {isUploading ? (
+                                                <div className="flex items-center justify-center">
+                                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Uploading...
+                                                </div>
+                                            ) : (
+                                                `Upload ${uploadData.images.length} Image${uploadData.images.length !== 1 ? 's' : ''}`
+                                            )}
                                         </button>
                                     </div>
                                 </div>

@@ -26,6 +26,7 @@ export async function POST(request) {
             image,
             category: 'profile-photo',
             title: 'Profile',
+            likes: 0,
             createdAt: new Date()
         });
 
