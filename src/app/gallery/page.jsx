@@ -10,6 +10,8 @@ const GalleryPage = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [loadedImages, setLoadedImages] = useState({});
+    const [galleryImages, setGalleryImages] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Check screen size
     useEffect(() => {
@@ -24,6 +26,43 @@ const GalleryPage = () => {
             }
         };
     }, []);
+
+    // Fetch gallery images from API
+    useEffect(() => {
+        const fetchGalleryImages = async () => {
+            try {
+                setIsLoading(true);
+                const response = await fetch('/api/gallery');
+                const data = await response.json();
+
+                if (response.ok) {
+                    setGalleryImages(data.images || []);
+                } else {
+                    console.error('Failed to fetch gallery images:', data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching gallery images:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchGalleryImages();
+    }, []);
+
+    const getDownloadUrl = (imageUrl) => {
+        if (!imageUrl) return '';
+
+        // If it's a Cloudinary image, add fl_attachment parameter to force download
+        if (imageUrl.includes('cloudinary.com')) {
+            // Check if URL already has query parameters
+            const separator = imageUrl.includes('?') ? '&' : '?';
+            return `${imageUrl}${separator}fl_attachment`;
+        }
+
+        // For non-Cloudinary images, return as-is
+        return imageUrl;
+    };
 
     // Predefined particle positions
     const particlePositions = useMemo(() => [
@@ -54,121 +93,10 @@ const GalleryPage = () => {
         { id: 'awards', name: 'Trophies & Awards' },
     ];
 
-    // Gallery images data with different aspect ratios
-    const galleryImages = [
-        {
-            id: 1,
-            category: 'matches',
-            title: 'Championship Victory',
-            description: 'Celebrating our tournament win against Royal Challengers',
-            date: 'October 15, 2023',
-            aspect: 'square',
-            image: '/gallery/match1.jpg'
-        },
-        {
-            id: 2,
-            category: 'training',
-            title: 'Net Practice',
-            description: 'Alex Johnson perfecting his cover drive',
-            date: 'September 5, 2023',
-            aspect: 'portrait',
-            image: '/gallery/training1.jpg'
-        },
-        {
-            id: 3,
-            category: 'team',
-            title: 'Team Photo 2023',
-            description: 'Official team photo for the 2023 season',
-            date: 'August 20, 2023',
-            aspect: 'landscape',
-            image: '/gallery/team1.jpg'
-        },
-        {
-            id: 4,
-            category: 'matches',
-            title: 'Final Over Thriller',
-            description: 'The tense final over against Thunder Bolts',
-            date: 'October 12, 2023',
-            aspect: 'landscape',
-            image: '/gallery/match2.jpg'
-        },
-        {
-            id: 5,
-            category: 'fans',
-            title: 'Fan Support',
-            description: 'Our amazing fans cheering us on at the stadium',
-            date: 'October 10, 2023',
-            aspect: 'portrait',
-            image: '/gallery/fans1.jpg'
-        },
-        {
-            id: 6,
-            category: 'awards',
-            title: 'Player of the Tournament',
-            description: 'Alex Johnson receiving the Player of the Tournament award',
-            date: 'October 16, 2023',
-            aspect: 'square',
-            image: '/gallery/awards1.jpg'
-        },
-        {
-            id: 7,
-            category: 'training',
-            title: 'Bowling Drill',
-            description: 'James Wilson working on his yorkers',
-            date: 'September 12, 2023',
-            aspect: 'landscape',
-            image: '/gallery/training2.jpg'
-        },
-        {
-            id: 8,
-            category: 'matches',
-            title: 'Victory Celebration',
-            description: 'Team celebrating after qualifying for finals',
-            date: 'October 5, 2023',
-            aspect: 'portrait',
-            image: '/gallery/match3.jpg'
-        },
-        {
-            id: 9,
-            category: 'team',
-            title: 'Team Bonding',
-            description: 'Team dinner after an important victory',
-            date: 'September 28, 2023',
-            aspect: 'landscape',
-            image: '/gallery/team2.jpg'
-        },
-        {
-            id: 10,
-            category: 'awards',
-            title: 'Man of the Match',
-            description: 'David Clark receiving Man of the Match award',
-            date: 'October 8, 2023',
-            aspect: 'square',
-            image: '/gallery/awards2.jpg'
-        },
-        {
-            id: 11,
-            category: 'fans',
-            title: 'Junior Fans',
-            description: 'Inspiring the next generation of cricketers',
-            date: 'October 3, 2023',
-            aspect: 'portrait',
-            image: '/gallery/fans2.jpg'
-        },
-        {
-            id: 12,
-            category: 'training',
-            title: 'Fielding Practice',
-            description: 'Team working on fielding drills',
-            date: 'September 18, 2023',
-            aspect: 'landscape',
-            image: '/gallery/training3.jpg'
-        }
-    ];
-
-    const filteredImages = activeCategory === 'all' 
-        ? galleryImages 
+    const filteredImages = activeCategory === 'all'
+        ? galleryImages
         : galleryImages.filter(image => image.category === activeCategory);
+
 
     // Animation variants
     const containerVariants = {
@@ -256,11 +184,11 @@ const GalleryPage = () => {
                         transition={{ duration: 0.7 }}
                         className="text-center mb-10"
                     >
-                        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        <h1 className="text-3xl md:text-4xl font-bold mb-6">
                             <span className="text-white">Team </span>
                             <span className="text-[#D4AF37]">Gallery</span>
                         </h1>
-                        <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+                        <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto">
                             Relive the greatest moments, celebrations, and behind-the-scenes action of the Mighty Strikers.
                         </p>
                     </motion.div>
@@ -292,6 +220,16 @@ const GalleryPage = () => {
                                     className={`md:sticky md:top-28 md:h-fit ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64 bg-[#0A0A0A] p-6 overflow-y-auto' : 'md:w-1/4'}`}
                                 >
                                     {/* Close button for mobile */}
+                                    {isMobile && (
+                                        <button
+                                            onClick={() => setIsFilterOpen(false)}
+                                            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
 
                                     <motion.div
                                         variants={containerVariants}
@@ -313,8 +251,8 @@ const GalleryPage = () => {
                                                         if (isMobile) setIsFilterOpen(false);
                                                     }}
                                                     className={`w-full text-left py-3 px-4 rounded-lg transition-all duration-300 ${activeCategory === category.id
-                                                            ? 'bg-[#D4AF37] text-black font-bold'
-                                                            : 'bg-[#1a1a1a] text-white hover:bg-[#2a2a2a]'
+                                                        ? 'bg-[#D4AF37] text-black font-bold'
+                                                        : 'bg-[#1a1a1a] text-white hover:bg-[#2a2a2a]'
                                                         }`}
                                                     whileHover={{ x: 5 }}
                                                 >
@@ -337,18 +275,14 @@ const GalleryPage = () => {
                                                         <span className="text-gray-400">Total Photos</span>
                                                         <span className="font-bold">{galleryImages.length}</span>
                                                     </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Match Moments</span>
-                                                        <span className="font-bold">{galleryImages.filter(img => img.category === 'matches').length}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Training Sessions</span>
-                                                        <span className="font-bold">{galleryImages.filter(img => img.category === 'training').length}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-gray-400">Team Photos</span>
-                                                        <span className="font-bold">{galleryImages.filter(img => img.category === 'team').length}</span>
-                                                    </div>
+                                                    {galleryCategories.filter(cat => cat.id !== 'all').map(category => (
+                                                        <div key={category.id} className="flex justify-between">
+                                                            <span className="text-gray-400">{category.name}</span>
+                                                            <span className="font-bold">
+                                                                {galleryImages.filter(img => img.category === category.id).length}
+                                                            </span>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </motion.div>
                                         )}
@@ -370,92 +304,74 @@ const GalleryPage = () => {
 
                         {/* Main Content - Gallery Grid */}
                         <div className="flex-1">
-                            <motion.div
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="visible"
-                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[minmax(200px,auto)]"
-                            >
-                                <AnimatePresence mode="popLayout">
-                                    {filteredImages.map((image) => (
-                                        <motion.div
-                                            key={image.id}
-                                            layout
-                                            variants={itemVariants}
-                                            className={`relative group cursor-pointer overflow-hidden rounded-xl ${getColumnClass(image.aspect)}`}
-                                            whileHover={{ scale: 1.02 }}
-                                            onClick={() => setSelectedImage(image)}
-                                            transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                        >
-                                            {/* Skeleton loader */}
-                                            {!loadedImages[image.id] && (
-                                                <div className="absolute inset-0 bg-[#2a2a2a] animate-pulse z-10" />
-                                            )}
-
-                                            <Image
-                                                src={image.image || '/default-gallery.jpg'}
-                                                alt={image.title}
-                                                fill
-                                                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                onLoad={() => handleImageLoad(image.id)}
-                                            />
-                                            
-                                            {/* Overlay with info */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                                                <h3 className="font-bold text-white text-sm md:text-base">{image.title}</h3>
-                                                <p className="text-gray-300 text-xs md:text-sm truncate">{image.description}</p>
-                                                <p className="text-[#D4AF37] text-xs mt-1">{image.date}</p>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-                            </motion.div>
-
-                            {/* Empty state */}
-                            {filteredImages.length === 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-center py-16"
-                                >
-                                    <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <h3 className="text-xl font-bold text-gray-400">No photos found</h3>
-                                    <p className="text-gray-500 mt-2">Try selecting a different category</p>
-                                </motion.div>
-                            )}
-
-                            {/* Upload Section */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                whileInView={{ opacity: 1 }}
-                                transition={{ duration: 0.8 }}
-                                viewport={{ once: true }}
-                                className="mt-12 bg-gradient-to-r from-[#0A0A0A] to-[#1a1a1a] rounded-2xl p-8 border border-[#2a2a2a]"
-                            >
-                                <h2 className="text-3xl font-bold mb-4 text-center text-[#D4AF37]">Share Your Photos</h2>
-                                <p className="text-xl text-gray-300 mb-8 text-center max-w-2xl mx-auto">
-                                    Have photos from our matches or events? Share them with the Mighty Strikers community.
-                                </p>
-                                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                                    <motion.label
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="bg-[#D4AF37] text-black font-bold py-3 px-8 rounded-full text-lg text-center cursor-pointer"
-                                    >
-                                        Upload Photos
-                                        <input type="file" multiple className="hidden" />
-                                    </motion.label>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="border border-[#D4AF37] text-[#D4AF37] font-bold py-3 px-8 rounded-full text-lg"
-                                    >
-                                        View Guidelines
-                                    </motion.button>
+                            {isLoading ? (
+                                <div className="flex justify-center items-center h-64">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D4AF37]"></div>
                                 </div>
-                            </motion.div>
+                            ) : (
+                                <>
+                                    <motion.div
+                                        variants={containerVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[minmax(200px,auto)]"
+                                    >
+                                        <AnimatePresence mode="popLayout">
+                                            {filteredImages.map((image) => (
+                                                <motion.div
+                                                    key={image._id || image.id}
+                                                    layout
+                                                    variants={itemVariants}
+                                                    className={`relative group cursor-pointer overflow-hidden rounded-xl ${getColumnClass(image.aspect || 'square')}`}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    onClick={() => setSelectedImage(image)}
+                                                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                                >
+                                                    {/* Skeleton loader */}
+                                                    {!loadedImages[image._id || image.id] && (
+                                                        <div className="absolute inset-0 bg-[#2a2a2a] animate-pulse z-10" />
+                                                    )}
+
+                                                    <Image
+                                                        src={image.image || '/default-gallery.jpg'}
+                                                        alt={image.title || 'Gallery image'}
+                                                        fill
+                                                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        onLoad={() => handleImageLoad(image._id || image.id)}
+                                                    />
+
+                                                    {/* Overlay with info */}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                                                        <h3 className="font-bold text-white text-sm md:text-base">{image.title || 'Profile Photo'}</h3>
+                                                        <p className="text-gray-300 text-xs md:text-sm truncate">{image.description || ''}</p>
+                                                        <p className="text-[#D4AF37] text-xs mt-1">
+                                                            {image.date || new Date(image.createdAt).toLocaleDateString()}
+                                                        </p>
+                                                        {image.name && (
+                                                            <p className="text-gray-400 text-xs mt-1">By: {image.name}</p>
+                                                        )}
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </AnimatePresence>
+                                    </motion.div>
+
+                                    {/* Empty state */}
+                                    {filteredImages.length === 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="text-center py-16"
+                                        >
+                                            <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <h3 className="text-xl font-bold text-gray-400">No photos found</h3>
+                                            <p className="text-gray-500 mt-2">Try selecting a different category</p>
+                                        </motion.div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -482,17 +398,22 @@ const GalleryPage = () => {
                                 <div className="relative h-96 md:h-[500px]">
                                     <Image
                                         src={selectedImage.image || '/default-gallery.jpg'}
-                                        alt={selectedImage.title}
+                                        alt={selectedImage.title || 'Gallery image'}
                                         fill
                                         className="object-contain"
                                     />
                                 </div>
-                                
+
                                 <div className="p-6">
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
-                                            <h3 className="text-2xl font-bold">{selectedImage.title}</h3>
-                                            <p className="text-[#D4AF37]">{selectedImage.date}</p>
+                                            <h3 className="text-2xl font-bold">{selectedImage.title || 'Untitled'}</h3>
+                                            <p className="text-[#D4AF37]">
+                                                {selectedImage.date || new Date(selectedImage.createdAt).toLocaleDateString()}
+                                            </p>
+                                            {selectedImage.name && (
+                                                <p className="text-gray-400 text-sm mt-1">Uploaded by: {selectedImage.name}</p>
+                                            )}
                                         </div>
                                         <button onClick={() => setSelectedImage(null)} className="text-gray-400 hover:text-white">
                                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -500,16 +421,20 @@ const GalleryPage = () => {
                                             </svg>
                                         </button>
                                     </div>
-                                    
-                                    <p className="text-gray-300 mb-6">{selectedImage.description}</p>
-                                    
+
+                                    <p className="text-gray-300 mb-6">{selectedImage.description || ''}</p>
+
                                     <div className="flex items-center gap-4">
-                                        <button className="flex items-center gap-2 text-gray-400 hover:text-white">
+                                        <a
+                                            href={getDownloadUrl(selectedImage.image)}
+                                            download
+                                            className="flex items-center gap-2 text-gray-400 hover:text-white"
+                                        >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                             </svg>
                                             <span>Download</span>
-                                        </button>
+                                        </a>
                                         <button className="flex items-center gap-2 text-gray-400 hover:text-white">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
