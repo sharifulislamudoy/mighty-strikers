@@ -1,8 +1,17 @@
+// src/app/api/gallery/upload/route.js
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../auth/[...nextauth]/route';
 
 export async function POST(req) {
   try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get('file');
     const username = formData.get('username');
@@ -58,6 +67,8 @@ export async function POST(req) {
       image: cloudinaryData.secure_url,
       category,
       title: title || 'Untitled',
+      likes: 0,
+      likedBy: [],
       createdAt: new Date()
     });
 

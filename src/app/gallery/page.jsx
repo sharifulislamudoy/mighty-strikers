@@ -17,6 +17,7 @@ const GalleryPage = () => {
     const [galleryImages, setGalleryImages] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [likedImages, setLikedImages] = useState({});
     const [uploadData, setUploadData] = useState({
         category: 'profile',
         title: '',
@@ -24,6 +25,15 @@ const GalleryPage = () => {
         previews: []
     });
     const [isUploading, setIsUploading] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const storedLikes = localStorage.getItem('likedImages');
+            if (storedLikes) {
+                setLikedImages(JSON.parse(storedLikes));
+            }
+        }
+    }, []);
 
     // Check screen size
     useEffect(() => {
@@ -63,6 +73,46 @@ const GalleryPage = () => {
 
         fetchGalleryImages();
     }, []);
+
+    // Handle like functionality
+    const handleLike = async (imageId) => {
+        // Check if user has already liked this image
+        if (likedImages[imageId]) {
+            toast.error('You have already liked this image');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/gallery/like', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ imageId }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update local state
+                setGalleryImages(prev => prev.map(img =>
+                    img._id === imageId ? { ...img, likes: (img.likes || 0) + 1 } : img
+                ));
+
+                // Update liked images in localStorage
+                const newLikedImages = { ...likedImages, [imageId]: true };
+                setLikedImages(newLikedImages);
+                localStorage.setItem('likedImages', JSON.stringify(newLikedImages));
+
+                toast.success('Image liked!');
+            } else {
+                toast.error(data.message || 'Failed to like image');
+            }
+        } catch (error) {
+            console.error('Error liking image:', error);
+            toast.error('Error liking image');
+        }
+    };
 
     // Handle image selection for upload
     const handleImageSelect = (e) => {
@@ -499,7 +549,42 @@ const GalleryPage = () => {
                                                         onLoad={() => handleImageLoad(image._id || image.id)}
                                                     />
 
-                                                    {/* Overlay with info */}
+                                                    {/* Like button - Always visible */}
+                                                    <div className="absolute top-3 right-3 z-20">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleLike(image._id);
+                                                            }}
+                                                            disabled={likedImages[image._id]}
+                                                            className={`flex items-center justify-center w-11 h-11 rounded-full backdrop-blur-sm ${likedImages[image._id]
+                                                                ? 'bg-red-500/20 text-red-500'
+                                                                : 'bg-black/40 text-gray-300 hover:bg-black/60 hover:text-yellow-500'
+                                                                } transition-all duration-300`}
+                                                        >
+                                                            <svg
+                                                                className="w-4 h-4"
+                                                                fill={likedImages[image._id] ? "currentColor" : "none"}
+                                                                stroke="currentColor"
+                                                                viewBox="0 0 24 24"
+                                                                strokeWidth={2}
+                                                            >
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Like count - Always visible */}
+                                                    <div className="absolute top-3 left-3 z-20">
+                                                        <div className="flex items-center gap-1 bg-black/60 text-yellow px-2 py-1 rounded-full text-xs backdrop-blur-sm">
+                                                            <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                            </svg>
+                                                            <span>{image.likes || 0}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Overlay with info - Still appears on hover */}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                                                         <h3 className="font-bold text-white text-sm md:text-base">{image.title || 'Profile Photo'}</h3>
                                                         <p className="text-gray-300 text-xs md:text-sm truncate">{image.description || ''}</p>

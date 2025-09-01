@@ -1,51 +1,49 @@
+import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
-export async function POST(request, { params }) {
-  try {
-    const { username } =await params;
-    const { liked } = await request.json();
-    
-    console.log('API Called with username:', username);
-    console.log('Like status:', liked);
-    
-    if (typeof liked !== 'boolean') {
-      return Response.json({ message: 'Invalid like status' }, { status: 400 });
+export async function POST(req) {
+    try {
+        const session = await getServerSession(authOptions);
+        
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { imageId } = await req.json();
+        
+        if (!imageId) {
+            return NextResponse.json({ message: 'Image ID is required' }, { status: 400 });
+        }
+
+        const { db } = await connectToDatabase();
+        const galleryCollection = db.collection('gallery');
+
+        // Check if user already liked this image
+        const image = await galleryCollection.findOne({ _id: new ObjectId(imageId) });
+        
+        if (image.likedBy && image.likedBy.includes(session.user.id)) {
+            return NextResponse.json({ message: 'Already liked' }, { status: 400 });
+        }
+
+        // Update the image with like and add user to likedBy array
+        const result = await galleryCollection.updateOne(
+            { _id: new ObjectId(imageId) },
+            { 
+                $inc: { likes: 1 },
+                $push: { likedBy: session.user.id }
+            }
+        );
+
+        if (result.modifiedCount === 0) {
+            return NextResponse.json({ message: 'Image not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ message: 'Image liked successfully' }, { status: 200 });
+    } catch (error) {
+        console.error('Like error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
-    
-    const { db } = await connectToDatabase();
-    const playersCollection = db.collection('players');
-    
-    // Find the player by username
-    const player = await playersCollection.findOne({ username });
-    console.log('Found player:', player);
-    
-    if (!player) {
-      return Response.json({ message: 'Player not found' }, { status: 404 });
-    }
-    
-    // Calculate new like count
-    const currentLikes = player.likes || 0;
-    const newLikeCount = liked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-    
-    // Update the player
-    const result = await playersCollection.updateOne(
-      { username },
-      { $set: { likes: newLikeCount } }
-    );
-    
-    console.log('Update result:', result);
-    
-    if (result.modifiedCount === 0) {
-      return Response.json({ message: 'Failed to update like count' }, { status: 500 });
-    }
-    
-    return Response.json({ 
-      message: 'Like updated successfully',
-      likes: newLikeCount 
-    });
-    
-  } catch (error) {
-    console.error('Error updating like:', error);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
-  }
 }
