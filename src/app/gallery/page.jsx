@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import { handleDownload } from '@/utils/downloadImage';
 
 const GalleryPage = () => {
     const [activeCategory, setActiveCategory] = useState('all');
@@ -50,19 +51,6 @@ const GalleryPage = () => {
         fetchGalleryImages();
     }, []);
 
-    const getDownloadUrl = (imageUrl) => {
-        if (!imageUrl) return '';
-
-        // If it's a Cloudinary image, add fl_attachment parameter to force download
-        if (imageUrl.includes('cloudinary.com')) {
-            // Check if URL already has query parameters
-            const separator = imageUrl.includes('?') ? '&' : '?';
-            return `${imageUrl}${separator}fl_attachment`;
-        }
-
-        // For non-Cloudinary images, return as-is
-        return imageUrl;
-    };
 
     // Predefined particle positions
     const particlePositions = useMemo(() => [
@@ -425,8 +413,8 @@ const GalleryPage = () => {
                                     <p className="text-gray-300 mb-6">{selectedImage.description || ''}</p>
 
                                     <div className="flex items-center gap-4">
-                                        <a
-                                            href={getDownloadUrl(selectedImage.image)}
+                                        <button
+                                            onClick={() => handleDownload(selectedImage.image, selectedImage.title || 'profile.jpg')}
                                             download
                                             className="flex items-center gap-2 text-gray-400 hover:text-white"
                                         >
@@ -434,7 +422,7 @@ const GalleryPage = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                                             </svg>
                                             <span>Download</span>
-                                        </a>
+                                        </button>
                                         <button className="flex items-center gap-2 text-gray-400 hover:text-white">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
