@@ -4,7 +4,6 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getServerSession } from 'next-auth/next';
 import { ObjectId } from 'mongodb';
 import { authOptions } from '../../auth/[...nextauth]/route';
-import { ObjectId } from 'mongodb';
 
 export async function POST(req) {
   try {
@@ -26,7 +25,7 @@ export async function POST(req) {
     // Check if user already liked this image
     const image = await galleryCollection.findOne({ _id: new ObjectId(imageId) });
     
-    if (image.likedBy && image.likedBy.includes(session.user.id)) {
+    if (image && image.likedBy && image.likedBy.includes(session.user.id)) {
       return NextResponse.json({ message: 'Already liked' }, { status: 400 });
     }
 
