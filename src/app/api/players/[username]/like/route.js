@@ -1,50 +1,40 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-
-export async function POST(req) {
+export async function POST(request, { params }) {
     try {
-        const session = await getServerSession(authOptions);
+        const { username } = params;
+        const { liked } = await request.json();
         
-        if (!session) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { imageId } = await req.json();
-        
-        if (!imageId) {
-            return NextResponse.json({ message: 'Image ID is required' }, { status: 400 });
-        }
-
         const { db } = await connectToDatabase();
-        const galleryCollection = db.collection('gallery');
-
-        // Check if user already liked this image
-        const image = await galleryCollection.findOne({ _id: new ObjectId(imageId) });
         
-        if (image.likedBy && image.likedBy.includes(session.user.id)) {
-            return NextResponse.json({ message: 'Already liked' }, { status: 400 });
+        // Find the player by username
+        const player = await db.collection('players').findOne({ username });
+        
+        if (!player) {
+            return NextResponse.json({ message: 'Player not found' }, { status: 404 });
         }
-
-        // Update the image with like and add user to likedBy array
-        const result = await galleryCollection.updateOne(
-            { _id: new ObjectId(imageId) },
-            { 
-                $inc: { likes: 1 },
-                $push: { likedBy: session.user.id }
-            }
+        
+        // Update likes count
+        const newLikes = liked ? (player.likes || 0) + 1 : Math.max(0, (player.likes || 0) - 1);
+        
+        // Update the player in the database
+        await db.collection('players').updateOne(
+            { _id: new ObjectId(player._id) },
+            { $set: { likes: newLikes } }
         );
-
-        if (result.modifiedCount === 0) {
-            return NextResponse.json({ message: 'Image not found' }, { status: 404 });
-        }
-
-        return NextResponse.json({ message: 'Image liked successfully' }, { status: 200 });
+        
+        return NextResponse.json({ 
+            message: 'Like updated successfully', 
+            likes: newLikes 
+        });
+        
     } catch (error) {
-        console.error('Like error:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        console.error('Error updating like:', error);
+        return NextResponse.json(
+            { message: 'Internal server error' }, 
+            { status: 500 }
+        );
     }
 }

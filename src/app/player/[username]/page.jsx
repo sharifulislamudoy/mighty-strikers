@@ -123,9 +123,6 @@ const PlayerDetailsPage = () => {
             console.log('Player username:', player.username);
             console.log('Making API call to:', `/api/players/${player.username}/like`);
 
-            // Store current state in case we need to revert
-            const previousLiked = liked;
-            const previousLikeCount = likeCount;
 
             // Optimistically update UI
             setLiked(!liked);

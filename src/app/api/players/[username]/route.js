@@ -1,100 +1,62 @@
+// app/api/players/[username]/route.js
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
 
-export async function GET() {
+export async function GET(request, { params }) {
     try {
+        const { username } = params;
         const { db } = await connectToDatabase();
-        const galleryCollection = db.collection('gallery');
+        const playersCollection = db.collection('players');
 
-        const images = await galleryCollection.find({}).sort({ createdAt: -1 }).toArray();
-        
-        return NextResponse.json({
-            images: images.map(img => ({
-                ...img,
-                _id: img._id.toString(),
-                likes: img.likes || 0
-            }))
-        }, { status: 200 });
+        const player = await playersCollection.findOne({ username });
+
+        if (!player) {
+            return NextResponse.json({ error: 'Player not found' }, { status: 404 });
+        }
+
+        // Convert ObjectId to string
+        const playerData = {
+            ...player,
+            _id: player._id.toString(),
+            likes: player.likes || 0
+        };
+
+        return NextResponse.json(playerData);
     } catch (error) {
-        console.error('Gallery fetch error:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+        console.error('Player fetch error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
-export async function POST(req) {
+export async function POST(request, { params }) {
     try {
-        const formData = await req.formData();
-        const file = formData.get('file');
-        const username = formData.get('username');
-        const name = formData.get('name');
-        const category = formData.get('category');
-        const title = formData.get('title');
-
-        if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-        }
-
-        // Upload to Cloudinary
-        const cloudinaryFormData = new FormData();
-        cloudinaryFormData.append('file', file);
-        cloudinaryFormData.append('upload_preset', 'react_unsigned');
-        cloudinaryFormData.append('cloud_name', 'dohhfubsa');
-
-        const cloudinaryResponse = await fetch(
-            `https://api.cloudinary.com/v1_1/dohhfubsa/image/upload`,
-            {
-                method: 'POST',
-                body: cloudinaryFormData,
-            }
-        );
-
-        if (!cloudinaryResponse.ok) {
-            throw new Error('Cloudinary upload failed');
-        }
-
-        const cloudinaryData = await cloudinaryResponse.json();
-
-        // Save to MongoDB
+        const { username } = params;
+        const { liked } = await request.json();
+        
         const { db } = await connectToDatabase();
-        const galleryCollection = db.collection('gallery');
+        const playersCollection = db.collection('players');
 
-        // Check if image already exists
-        const existingImage = await galleryCollection.findOne({
-            username,
-            image: cloudinaryData.secure_url
-        });
-
-        if (existingImage) {
-            return NextResponse.json(
-                { error: 'Image already exists in gallery' },
-                { status: 400 }
-            );
+        // Find the player
+        const player = await playersCollection.findOne({ username });
+        
+        if (!player) {
+            return NextResponse.json({ error: 'Player not found' }, { status: 404 });
         }
 
-        // Add to gallery
-        const result = await galleryCollection.insertOne({
-            username,
-            name,
-            image: cloudinaryData.secure_url,
-            category,
-            title: title || 'Untitled',
-            likes: 0,
-            likedBy: [],
-            createdAt: new Date()
-        });
-
-        return NextResponse.json({
-            message: 'Image uploaded successfully',
-            imageUrl: cloudinaryData.secure_url,
-            galleryId: result.insertedId
-        });
-
-    } catch (error) {
-        console.error('Upload error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 }
+        // Update likes count
+        const newLikes = liked ? (player.likes || 0) + 1 : Math.max(0, (player.likes || 0) - 1);
+        
+        await playersCollection.updateOne(
+            { username },
+            { $set: { likes: newLikes } }
         );
+
+        return NextResponse.json({ 
+            message: 'Like updated successfully', 
+            likes: newLikes 
+        });
+    } catch (error) {
+        console.error('Like update error:', error);
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
