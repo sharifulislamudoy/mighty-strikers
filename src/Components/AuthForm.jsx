@@ -27,8 +27,6 @@ const AuthForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Forgot password states
   const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
@@ -225,8 +223,6 @@ const AuthForm = () => {
 
     try {
       let imageUrl = null;
-
-      // Upload image to Cloudinary if it exists
       if (formData.photo) {
         const data = new FormData();
         data.append("file", formData.photo);

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 const HeroSection = () => {
     const constraintsRef = useRef(null);
     const [isClient, setIsClient] = useState(false);
-    const [playersCount, setPlayersCount] = useState(18); // Default value
+    const [playersCount, setPlayersCount] = useState(0);
     const router = useRouter();
 
     useEffect(() => {
