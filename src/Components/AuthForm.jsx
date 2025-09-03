@@ -28,6 +28,17 @@ const AuthForm = () => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Forgot password states
+  const [forgotPasswordMode, setForgotPasswordMode] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [codeVerified, setCodeVerified] = useState(false);
+
   const specialtyOptions = [
     'Power Hitting', 'Leadership', 'Fielding', 'Yorkers',
     'Swing Bowling', 'Death Overs', 'Spin Bowling', 'Fast Bowling',
@@ -81,6 +92,130 @@ const AuthForm = () => {
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const toggleNewPasswordVisibility = () => {
+    setShowNewPassword(!showNewPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
+  // Forgot password functions
+  const handleSendCode = async () => {
+    if (!forgotPasswordEmail) {
+      toast.error('Please enter your email address');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: forgotPasswordEmail }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to send verification code');
+      }
+
+      setCodeSent(true);
+      toast.success('Verification code sent to your email');
+    } catch (err) {
+      toast.error(err.message || 'Failed to send verification code');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode) {
+      toast.error('Please enter the verification code');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: forgotPasswordEmail,
+          code: verificationCode
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Invalid verification code');
+      }
+
+      setCodeVerified(true);
+      toast.success('Code verified successfully');
+    } catch (err) {
+      toast.error(err.message || 'Invalid verification code');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error('Please enter and confirm your new password');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: forgotPasswordEmail,
+          code: verificationCode,
+          newPassword
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to reset password');
+      }
+
+      toast.success('Password reset successfully');
+
+      // Reset the form and go back to login
+      setTimeout(() => {
+        setForgotPasswordMode(false);
+        setForgotPasswordEmail('');
+        setVerificationCode('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setCodeSent(false);
+        setCodeVerified(false);
+      }, 1500);
+    } catch (err) {
+      toast.error(err.message || 'Failed to reset password');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -260,7 +395,12 @@ const AuthForm = () => {
                 <span className="text-[#f0c22c]">Warrior</span>
               </h1>
               <p className="text-gray-400 mt-2">
-                {isLogin ? 'Welcome back to the team' : 'Join our winning team'}
+                {forgotPasswordMode
+                  ? 'Reset your password'
+                  : isLogin
+                    ? 'Welcome back to the team'
+                    : 'Join our winning team'
+                }
               </p>
             </motion.div>
           </div>
@@ -274,7 +414,246 @@ const AuthForm = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {forgotPasswordMode ? (
+            // Forgot Password Flow
+            <div className="space-y-6">
+              {!codeSent ? (
+                // Step 1: Enter email
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      id="forgot-email"
+                      type="email"
+                      required
+                      value={forgotPasswordEmail}
+                      onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all"
+                      placeholder="Enter your email address"
+                    />
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <motion.button
+                      type="button"
+                      onClick={() => setForgotPasswordMode(false)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-all"
+                    >
+                      Back to Login
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      onClick={handleSendCode}
+                      disabled={isSubmitting}
+                      whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                      whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${isSubmitting
+                        ? 'bg-gray-700 cursor-not-allowed'
+                        : 'bg-[#f0c22c] hover:bg-[#e0b224] text-black'
+                        }`}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2"
+                          />
+                          Sending...
+                        </div>
+                      ) : (
+                        'Send Verification Code'
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ) : !codeVerified ? (
+                // Step 2: Enter verification code
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label htmlFor="verification-code" className="block text-sm font-medium text-gray-300 mb-2">
+                      Verification Code
+                    </label>
+                    <input
+                      id="verification-code"
+                      type="text"
+                      required
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all text-center text-2xl tracking-widest"
+                      placeholder="Enter 6-digit code"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Check your email for the 6-digit verification code
+                    </p>
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        setCodeSent(false);
+                        setVerificationCode('');
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-all"
+                    >
+                      Back
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      onClick={handleVerifyCode}
+                      disabled={isSubmitting || verificationCode.length !== 6}
+                      whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                      whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${isSubmitting || verificationCode.length !== 6
+                        ? 'bg-gray-700 cursor-not-allowed'
+                        : 'bg-[#f0c22c] hover:bg-[#e0b224] text-black'
+                        }`}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2"
+                          />
+                          Verifying...
+                        </div>
+                      ) : (
+                        'Verify Code'
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ) : (
+                // Step 3: Enter new password
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-4"
+                >
+                  <div className="relative">
+                    <label htmlFor="new-password" className="block text-sm font-medium text-gray-300 mb-2">
+                      New Password
+                    </label>
+                    <input
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all pr-10"
+                      placeholder="Enter your new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={toggleNewPasswordVisibility}
+                      className="absolute right-3 top-10 text-gray-400 hover:text-white focus:outline-none"
+                    >
+                      {showNewPassword ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d极速="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3极速l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-300 mb-2">
+                      Confirm New Password
+                    </label>
+                    <input
+                      id="confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#f0c22c] focus:border-transparent transition-all pr-10"
+                      placeholder="Confirm your new password"
+                    />
+                    <button
+                      type="button"
+                      onClick={toggleConfirmPasswordVisibility}
+                      className="absolute right-3 top-10 text-gray-400 hover:text-white focus:outline-none"
+                    >
+                      {showConfirmPassword ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943极速-9.542-极速7z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <motion.button
+                      type="button"
+                      onClick={() => {
+                        setCodeVerified(false);
+                        setNewPassword('');
+                        setConfirmPassword('');
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-all"
+                    >
+                      Back
+                    </motion.button>
+
+                    <motion.button
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={isSubmitting || !newPassword || !confirmPassword || newPassword !== confirmPassword}
+                      whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                      whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                      className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${isSubmitting || !newPassword || !confirmPassword || newPassword !== confirmPassword
+                        ? 'bg-gray-700 cursor-not-allowed'
+                        : 'bg-[#f0c22c] hover:bg-[#e0b224] text-black'
+                        }`}
+                    >
+                      {isSubmitting ? (
+                        <div className="flex items-center justify-center">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="w-5 h-5 border-2 border-black border-t-transparent rounded-full mr-2"
+                          />
+                          Resetting...
+                        </div>
+                      ) : (
+                        'Reset Password'
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+          ) : (<form onSubmit={handleSubmit} className="space-y-6">
             {/* Toggle between Login and Register */}
             <div className="flex justify-center mb-6">
               <div className="bg-[#1A1A1A] rounded-full p-1 flex">
@@ -355,9 +734,13 @@ const AuthForm = () => {
                   </div>
 
                   <div className="text-right">
-                    <a href="#" className="text-sm text-[#f0c22c] hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => setForgotPasswordMode(true)}
+                      className="text-sm text-[#f0c22c] hover:underline"
+                    >
                       Forgot password?
-                    </a>
+                    </button>
                   </div>
                 </motion.div>
               ) : (
@@ -648,11 +1031,11 @@ const AuthForm = () => {
                 'Join Our Team'
               )}
             </motion.button>
-          </form>
+          </form>)}
         </div>
       </motion.div>
     </div>
   );
-};
+}
 
 export default AuthForm;
