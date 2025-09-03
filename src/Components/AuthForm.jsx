@@ -439,7 +439,7 @@ const AuthForm = () => {
                     />
                   </div>
 
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col-reverse lg:flex-row gap-3">
                     <motion.button
                       type="button"
                       onClick={() => setForgotPasswordMode(false)}
