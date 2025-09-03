@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export default function ProtectedRoute({ children, username, requireAdmin = false }) {
+export default function ProtectedRoute({ children, username }) {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -23,13 +23,7 @@ export default function ProtectedRoute({ children, username, requireAdmin = fals
       router.push(`/player/dashboard/${session.user.username}`);
       return;
     }
-
-    // Check admin role if required
-    if (requireAdmin && session.user.role !== 'admin') {
-      router.push('/unauthorized');
-      return;
-    }
-  }, [session, status, username, router, requireAdmin]);
+  }, [session, status, username, router]);
 
   if (status === 'loading') {
     return (
@@ -39,11 +33,8 @@ export default function ProtectedRoute({ children, username, requireAdmin = fals
     );
   }
 
-  // Only render children if user is authenticated, username matches, and role requirements are met
+  // Only render children if user is authenticated and username matches
   if (session && session.user.username === username) {
-    if (requireAdmin && session.user.role !== 'admin') {
-      return null; // Will be redirected by useEffect
-    }
     return <>{children}</>;
   }
 
