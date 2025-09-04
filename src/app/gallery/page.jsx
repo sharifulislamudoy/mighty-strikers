@@ -76,7 +76,7 @@ const GalleryPage = () => {
 
     // Handle like functionality
     const handleLike = async (imageId) => {
-        // Check if user has already liked this image
+        // Check if image has already been liked (using localStorage)
         if (likedImages[imageId]) {
             toast.error('You have already liked this image');
             return;
