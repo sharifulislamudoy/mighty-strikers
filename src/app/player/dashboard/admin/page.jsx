@@ -12,6 +12,8 @@ const AdminDashboard = () => {
   const [matches, setMatches] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [stats, setStats] = useState([]);
+  const [playerToDelete, setPlayerToDelete] = useState(null);
+  const [playerToReject, setPlayerToReject] = useState(null);
   const [adminData, setAdminData] = useState({
     name: "Admin User",
     email: "admin@cricketclub.com",
@@ -44,66 +46,66 @@ const AdminDashboard = () => {
   // Load mock data
   useEffect(() => {
     // Mock players data
-    setPlayers([
-      {
-        _id: "1",
-        name: "Mohona Akter Mukta",
-        username: "mohona-akter-mukta-",
-        phone: "01995322080",
-        email: "surifroton305651@gmail.com",
-        image: "https://res.cloudinary.com/dohhfubsa/image/upload/v1756730697/IMG20250",
-        category: "Batsman",
-        specialties: ["Right Handed Batting", "Agile Runner"],
-        battingStyle: "Right Handed",
-        bowlingStyle: "Left Arm Medium",
-        age: 24,
-        profileUrl: "https://hi.com",
-        role: "player",
-        likes: 1,
-        status: "approved",
-        createdAt: "2025-09-01T12:45:00.404+00:00"
-      },
-      {
-        _id: "2",
-        name: "John Smith",
-        username: "john-smith",
-        phone: "0123456789",
-        email: "john@example.com",
-        image: "/default-player.jpg",
-        category: "Bowler",
-        specialties: ["Fast Bowling", "Yorker Specialist"],
-        battingStyle: "Right Handed",
-        bowlingStyle: "Right Arm Fast",
-        age: 28,
-        profileUrl: "https://example.com",
-        role: "player",
-        likes: 5,
-        status: "approved",
-        createdAt: "2025-08-15T10:30:00.404+00:00"
-      }
-    ]);
+    // setPlayers([
+    //   {
+    //     _id: "1",
+    //     name: "Mohona Akter Mukta",
+    //     username: "mohona-akter-mukta-",
+    //     phone: "01995322080",
+    //     email: "surifroton305651@gmail.com",
+    //     image: "https://res.cloudinary.com/dohhfubsa/image/upload/v1756730697/IMG20250",
+    //     category: "Batsman",
+    //     specialties: ["Right Handed Batting", "Agile Runner"],
+    //     battingStyle: "Right Handed",
+    //     bowlingStyle: "Left Arm Medium",
+    //     age: 24,
+    //     profileUrl: "https://hi.com",
+    //     role: "player",
+    //     likes: 1,
+    //     status: "approved",
+    //     createdAt: "2025-09-01T12:45:00.404+00:00"
+    //   },
+    //   {
+    //     _id: "2",
+    //     name: "John Smith",
+    //     username: "john-smith",
+    //     phone: "0123456789",
+    //     email: "john@example.com",
+    //     image: "/default-player.jpg",
+    //     category: "Bowler",
+    //     specialties: ["Fast Bowling", "Yorker Specialist"],
+    //     battingStyle: "Right Handed",
+    //     bowlingStyle: "Right Arm Fast",
+    //     age: 28,
+    //     profileUrl: "https://example.com",
+    //     role: "player",
+    //     likes: 5,
+    //     status: "approved",
+    //     createdAt: "2025-08-15T10:30:00.404+00:00"
+    //   }
+    // ]);
 
     // Mock pending players
-    setPendingPlayers([
-      {
-        _id: "3",
-        name: "New Player",
-        username: "new-player",
-        phone: "0123456789",
-        email: "new@example.com",
-        image: "/default-player.jpg",
-        category: "All-Rounder",
-        specialties: ["Batting", "Bowling"],
-        battingStyle: "Left Handed",
-        bowlingStyle: "Right Arm Offbreak",
-        age: 22,
-        profileUrl: "https://example.com",
-        role: "player",
-        likes: 0,
-        status: "pending",
-        createdAt: "2025-09-03T08:15:00.404+00:00"
-      }
-    ]);
+    // setPendingPlayers([
+    //   {
+    //     _id: "3",
+    //     name: "New Player",
+    //     username: "new-player",
+    //     phone: "0123456789",
+    //     email: "new@example.com",
+    //     image: "/default-player.jpg",
+    //     category: "All-Rounder",
+    //     specialties: ["Batting", "Bowling"],
+    //     battingStyle: "Left Handed",
+    //     bowlingStyle: "Right Arm Offbreak",
+    //     age: 22,
+    //     profileUrl: "https://example.com",
+    //     role: "player",
+    //     likes: 0,
+    //     status: "pending",
+    //     createdAt: "2025-09-03T08:15:00.404+00:00"
+    //   }
+    // ]);
 
     // Mock matches
     setMatches([
@@ -161,19 +163,85 @@ const AdminDashboard = () => {
     ]);
   }, []);
 
+  // Fetch players from database
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      try {
+        const response = await fetch('/api/players');
+        if (response.ok) {
+          const playersData = await response.json();
+          setPlayers(playersData.filter(player => player.status === 'approved'));
+          setPendingPlayers(playersData.filter(player => player.status === 'pending'));
+        }
+      } catch (error) {
+        console.error('Error fetching players:', error);
+      }
+    };
+
+    fetchPlayers();
+  }, []);
+
   // Handle player approval
-  const handleApprovePlayer = (playerId) => {
-    const player = pendingPlayers.find(p => p._id === playerId);
-    if (player) {
-      setPendingPlayers(pendingPlayers.filter(p => p._id !== playerId));
-      setPlayers([...players, { ...player, status: "approved" }]);
+  const handleApprovePlayer = async (playerId) => {
+    try {
+      const response = await fetch('/api/players/approve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playerId }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        const player = pendingPlayers.find(p => p._id === playerId);
+        setPendingPlayers(pendingPlayers.filter(p => p._id !== playerId));
+        setPlayers([...players, { ...player, status: "approved" }]);
+      }
+    } catch (error) {
+      console.error('Error approving player:', error);
     }
   };
 
   // Handle player rejection
-  const handleRejectPlayer = (playerId) => {
-    setPendingPlayers(pendingPlayers.filter(p => p._id !== playerId));
+  const handleRejectPlayer = async (playerId) => {
+    try {
+      const response = await fetch('/api/players/reject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playerId }),
+      });
+
+      if (response.ok) {
+        setPendingPlayers(pendingPlayers.filter(p => p._id !== playerId));
+      }
+    } catch (error) {
+      console.error('Error rejecting player:', error);
+    }
   };
+
+  // Handle player deletion
+  const handleDeletePlayer = async (playerId) => {
+    try {
+      const response = await fetch('/api/players/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playerId }),
+      });
+
+      if (response.ok) {
+        setPlayers(players.filter(p => p._id !== playerId));
+        setPlayerToDelete(null);
+      }
+    } catch (error) {
+      console.error('Error deleting player:', error);
+    }
+  };
+
 
   // Handle adding new match
   const handleAddMatch = (newMatch) => {
@@ -510,7 +578,7 @@ const AdminDashboard = () => {
                                       Approve
                                     </button>
                                     <button
-                                      onClick={() => handleRejectPlayer(player._id)}
+                                      onClick={() => setPlayerToReject(player)}
                                       className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg"
                                     >
                                       Reject
@@ -524,7 +592,8 @@ const AdminDashboard = () => {
 
                         {/* Current Players */}
                         <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Current Players</h3>
-                        <div className="overflow-x-auto">
+                        {/* Desktop Table */}
+                        <div className="hidden sm:block overflow-x-auto">
                           <table className="w-full">
                             <thead>
                               <tr className="border-b border-[#2a2a2a]">
@@ -532,37 +601,35 @@ const AdminDashboard = () => {
                                 <th className="text-left py-3">Category</th>
                                 <th className="text-left py-3">Batting</th>
                                 <th className="text-left py-3">Bowling</th>
-                                <th className="text-left py-3">Age</th>
                                 <th className="text-left py-3">Actions</th>
                               </tr>
                             </thead>
                             <tbody>
                               {players.map(player => (
                                 <tr key={player._id} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
-                                  <td className="py-3">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
-                                        {player.image ? (
-                                          <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
-                                        ) : (
-                                          <span className="text-sm font-bold">{player.name.charAt(0)}</span>
-                                        )}
-                                      </div>
-                                      <div>
-                                        <div className="font-medium">{player.name}</div>
-                                        <div className="text-sm text-gray-400">{player.email}</div>
-                                      </div>
+                                  <td className="py-3 flex items-center space-x-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                      {player.image ? (
+                                        <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
+                                      ) : (
+                                        <span className="text-sm font-bold">{player.name.charAt(0)}</span>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{player.name}</div>
+                                      <div className="text-sm text-gray-400">{player.email}</div>
                                     </div>
                                   </td>
                                   <td className="py-3 capitalize">{player.category}</td>
                                   <td className="py-3">{player.battingStyle}</td>
                                   <td className="py-3">{player.bowlingStyle}</td>
-                                  <td className="py-3">{player.age}</td>
                                   <td className="py-3">
-                                    <div className="flex space-x-2">
-                                      <button className="text-[#D4AF37] hover:underline">Edit</button>
-                                      <button className="text-red-500 hover:underline">Remove</button>
-                                    </div>
+                                    <button
+                                      onClick={() => setPlayerToDelete(player)}
+                                      className="text-red-500 hover:underline"
+                                    >
+                                      Remove
+                                    </button>
                                   </td>
                                 </tr>
                               ))}
@@ -570,12 +637,93 @@ const AdminDashboard = () => {
                           </table>
                         </div>
 
-                        <div className="mt-6">
-                          <button className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
-                            <span>+</span>
-                            <span>Add New Player</span>
-                          </button>
+                        {/* Mobile Card Layout */}
+                        <div className="sm:hidden space-y-4">
+                          {players.map(player => (
+                            <div key={player._id} className="p-4 border border-[#2a2a2a] rounded-lg hover:bg-[#0A0A0A]">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                  {player.image ? (
+                                    <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
+                                  ) : (
+                                    <span className="text-sm font-bold">{player.name.charAt(0)}</span>
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="font-medium">{player.name}</div>
+                                  <div className="text-sm text-gray-400">{player.email}</div>
+                                </div>
+                              </div>
+                              <div className="text-sm mb-1"><span className="font-semibold">Category:</span> {player.category}</div>
+                              <div className="text-sm mb-1"><span className="font-semibold">Batting:</span> {player.battingStyle}</div>
+                              <div className="text-sm mb-1"><span className="font-semibold">Bowling:</span> {player.bowlingStyle}</div>
+                              <button
+                                onClick={() => setPlayerToDelete(player)}
+                                className="text-red-500 hover:underline mt-2"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ))}
                         </div>
+
+                        {/* Delete Confirmation Modal */}
+                        {playerToDelete && (
+                          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                            <div className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md">
+                              <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Removal</h3>
+                              <p className="mb-6">
+                                Are you sure you want to remove {playerToDelete.name} from the team? This action cannot be undone.
+                              </p>
+                              <div className="flex space-x-4 justify-end">
+                                <button
+                                  onClick={() => setPlayerToDelete(null)}
+                                  className="px-4 py-2 rounded-lg border border-gray-600 hover:bg-gray-800"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleDeletePlayer(playerToDelete._id);
+                                    setPlayerToDelete(null);
+                                  }}
+                                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                                >
+                                  Confirm Removal
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reject Confirmation Modal */}
+                        {playerToReject && (
+                          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                            <div className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md">
+                              <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Rejection</h3>
+                              <p className="mb-6">
+                                Are you sure you want to reject {playerToReject.name}'s application? This action cannot be undone.
+                              </p>
+                              <div className="flex space-x-4 justify-end">
+                                <button
+                                  onClick={() => setPlayerToReject(null)}
+                                  className="px-4 py-2 rounded-lg border border-gray-600 hover:bg-gray-800"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleRejectPlayer(playerToReject._id);
+                                    setPlayerToReject(null);
+                                  }}
+                                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                                >
+                                  Confirm Rejection
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )}
 

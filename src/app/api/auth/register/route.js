@@ -76,7 +76,7 @@ export async function POST(request) {
       age: parseInt(age),
       profileUrl: profileUrl || '',
       role: 'player',
-      statue: 'pending',
+      status: 'pending',
       likes: 0,
       createdAt: new Date(),
       updatedAt: new Date()
