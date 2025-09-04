@@ -14,7 +14,7 @@ const TeamPage = () => {
     const [teamMembers, setTeamMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [totalPlayers, setTotalPlayers] = useState(0); // New state for total players count
+    const [totalPlayers, setTotalPlayers] = useState(0);
 
     // Fetch team members from API
     useEffect(() => {
@@ -28,8 +28,12 @@ const TeamPage = () => {
                 }
                 
                 const players = await response.json();
-                setTeamMembers(players);
-                setTotalPlayers(players.length); // Set the total players count
+                
+                // Filter players with status: 'approved'
+                const approvedPlayers = players.filter(player => player.status === 'approved');
+                
+                setTeamMembers(approvedPlayers);
+                setTotalPlayers(approvedPlayers.length); // Set the total approved players count
             } catch (err) {
                 console.error('Error fetching players:', err);
                 setError(err.message);

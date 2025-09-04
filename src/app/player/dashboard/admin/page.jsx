@@ -194,13 +194,6 @@ const AdminDashboard = () => {
         <div className="w-11/12 px-3 mx-auto pt-20 pb-16">
           {/* Animated background elements */}
           <div className="absolute inset-0 z-0 overflow-hidden">
-            {/* Cricket field circles */}
-            <motion.div
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#D4AF37] opacity-10"
-              initial={{ width: 0, height: 0 }}
-              animate={{ width: 600, height: 600 }}
-              transition={{ duration: 2 }}
-            />
 
             {/* Floating particles */}
             {particlePositions.map((pos, i) => (
