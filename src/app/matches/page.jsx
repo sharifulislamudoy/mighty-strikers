@@ -344,7 +344,7 @@ const MatchPage = () => {
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-6 py-3 font-medium capitalize text-lg ${activeTab === tab ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]' : 'text-gray-400 hover:text-white'}`}
                             >
-                                {tab === 'upcoming' ? 'Upcoming Matches' : 'Match Results'}
+                                {tab === 'upcoming' ? 'Upcoming' : 'Results'}
                             </button>
                         ))}
                     </motion.div>

@@ -883,7 +883,6 @@ const AdminDashboard = () => {
                                 <div className="text-center p-3">
                                   <p className="font-medium mb-2">{item.title || 'Profile'}</p>
                                   <div className="flex space-x-2 justify-center">
-                                    <button className="text-[#D4AF37] hover:underline">Edit</button>
                                     <button
                                       onClick={() => setImageToDelete(item)}
                                       className="text-red-500 hover:underline"
