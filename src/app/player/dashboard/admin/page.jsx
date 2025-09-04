@@ -4,8 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import AdminProtected from '@/Components/AdminProtected';
+import toast, { Toaster } from 'react-hot-toast';
+import { useSession } from 'next-auth/react';
 
 const AdminDashboard = () => {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [players, setPlayers] = useState([]);
   const [pendingPlayers, setPendingPlayers] = useState([]);
@@ -14,82 +17,112 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState([]);
   const [playerToDelete, setPlayerToDelete] = useState(null);
   const [playerToReject, setPlayerToReject] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState(null);
+  const [uploadData, setUploadData] = useState({
+    category: 'profile',
+    title: '',
+    images: [],
+    previews: [],
+  });
 
   // Animation variants
   const tabVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
 
   // Predefined particle positions
   const particlePositions = [
-    { top: "4.06%", left: "80.49%", opacity: 0.16 },
-    { top: "32.83%", left: "34.72%", opacity: 0.16 },
-    { top: "89.70%", left: "66.91%", opacity: 0.17 },
-    { top: "76.67%", left: "0.09%", opacity: 0.18 },
-    { top: "85.65%", left: "50.75%", opacity: 0.42 },
-    { top: "39.62%", left: "23.81%", opacity: 0.18 },
-    { top: "72.39%", left: "2.42%", opacity: 0.14 },
-    { top: "35.22%", left: "70.55%", opacity: 0.24 },
-    { top: "53.36%", left: "88.30%", opacity: 0.24 },
-    { top: "5.74%", left: "40.06%", opacity: 0.54 },
+    { top: '4.06%', left: '80.49%', opacity: 0.16 },
+    { top: '32.83%', left: '34.72%', opacity: 0.16 },
+    { top: '89.70%', left: '66.91%', opacity: 0.17 },
+    { top: '76.67%', left: '0.09%', opacity: 0.18 },
+    { top: '85.65%', left: '50.75%', opacity: 0.42 },
+    { top: '39.62%', left: '23.81%', opacity: 0.18 },
+    { top: '72.39%', left: '2.42%', opacity: 0.14 },
+    { top: '35.22%', left: '70.55%', opacity: 0.24 },
+    { top: '53.36%', left: '88.30%', opacity: 0.24 },
+    { top: '5.74%', left: '40.06%', opacity: 0.54 },
   ];
 
-  // Load mock data
+  // Gallery categories
+  const galleryCategories = [
+    { id: 'matches', name: 'Match Moments' },
+    { id: 'winning', name: 'Winning Moments' },
+    { id: 'team', name: 'Team Photos' },
+  ];
+
+  // Fetch gallery images from API
+  useEffect(() => {
+    const fetchGalleryImages = async () => {
+      try {
+        const response = await fetch('/api/gallery');
+        const data = await response.json();
+
+        if (response.ok) {
+          setGallery(data.images || []);
+        } else {
+          console.error('Failed to fetch gallery images:', data.message);
+          toast.error('Failed to load gallery images');
+        }
+      } catch (error) {
+        console.error('Error fetching gallery images:', error);
+        toast.error('Error loading gallery images');
+      }
+    };
+
+    fetchGalleryImages();
+  }, []);
+
+  // Load mock data for matches and stats
   useEffect(() => {
     setMatches([
       {
         id: 1,
-        opponent: "Thunder Bolts",
-        date: "2025-09-15",
-        time: "14:00",
-        venue: "City Cricket Ground",
-        status: "scheduled",
-        type: "T20",
-        team: "First XI"
+        opponent: 'Thunder Bolts',
+        date: '2025-09-15',
+        time: '14:00',
+        venue: 'City Cricket Ground',
+        status: 'scheduled',
+        type: 'T20',
+        team: 'First XI',
       },
       {
         id: 2,
-        opponent: "Royal Strikers",
-        date: "2025-09-22",
-        time: "15:30",
-        venue: "National Stadium",
-        status: "scheduled",
-        type: "One Day",
-        team: "First XI"
-      }
+        opponent: 'Royal Strikers',
+        date: '2025-09-22',
+        time: '15:30',
+        venue: 'National Stadium',
+        status: 'scheduled',
+        type: 'One Day',
+        team: 'First XI',
+      },
     ]);
 
-    // Mock gallery images
-    setGallery([
-      { id: 1, url: "/gallery1.jpg", caption: "Team Celebration" },
-      { id: 2, url: "/gallery2.jpg", caption: "Match Action" },
-      { id: 3, url: "/gallery3.jpg", caption: "Training Session" }
-    ]);
-
-    // Mock player stats
     setStats([
       {
-        playerId: "1",
-        name: "Mohona Akter Mukta",
+        playerId: '1',
+        name: 'Mohona Akter Mukta',
         matches: 15,
         runs: 450,
         highest: 87,
         average: 32.14,
         wickets: 3,
-        economy: 5.2
+        economy: 5.2,
       },
       {
-        playerId: "2",
-        name: "John Smith",
+        playerId: '2',
+        name: 'John Smith',
         matches: 12,
         runs: 120,
         highest: 35,
         average: 12.0,
         wickets: 18,
-        economy: 4.8
-      }
+        economy: 4.8,
+      },
     ]);
   }, []);
 
@@ -100,8 +133,8 @@ const AdminDashboard = () => {
         const response = await fetch('/api/players');
         if (response.ok) {
           const playersData = await response.json();
-          setPlayers(playersData.filter(player => player.status === 'approved'));
-          setPendingPlayers(playersData.filter(player => player.status === 'pending'));
+          setPlayers(playersData.filter((player) => player.status === 'approved'));
+          setPendingPlayers(playersData.filter((player) => player.status === 'pending'));
         }
       } catch (error) {
         console.error('Error fetching players:', error);
@@ -110,6 +143,125 @@ const AdminDashboard = () => {
 
     fetchPlayers();
   }, []);
+
+  // Handle image selection for upload
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const newPreviews = [];
+    const newImages = [];
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newPreviews.push(e.target.result);
+        if (newPreviews.length === files.length) {
+          setUploadData((prev) => ({
+            ...prev,
+            previews: [...prev.previews, ...newPreviews],
+            images: [...prev.images, ...newImages],
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+      newImages.push(file);
+    });
+  };
+
+  // Remove selected image from upload
+  const removeImage = (index) => {
+    setUploadData((prev) => ({
+      ...prev,
+      previews: prev.previews.filter((_, i) => i !== index),
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Handle image upload
+  const handleUpload = async () => {
+    if (!session) {
+      toast.error('You must be logged in to upload images');
+      return;
+    }
+
+    if (uploadData.images.length === 0) {
+      toast.error('Please select at least one image');
+      return;
+    }
+
+    setIsUploading(true);
+    const uploadToast = toast.loading(`Uploading ${uploadData.images.length} image${uploadData.images.length !== 1 ? 's' : ''}...`);
+
+    try {
+      const uploadPromises = uploadData.images.map(async (image) => {
+        const formData = new FormData();
+        formData.append('file', image);
+        formData.append('username', session.user.username);
+        formData.append('name', session.user.name);
+        formData.append('category', uploadData.category);
+        formData.append('title', uploadData.title || '');
+
+        const response = await fetch('/api/gallery/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        return response.json();
+      });
+
+      await Promise.all(uploadPromises);
+
+      toast.success('Images uploaded successfully!', { id: uploadToast });
+      setShowUploadModal(false);
+      setUploadData({
+        category: 'profile',
+        title: '',
+        images: [],
+        previews: [],
+      });
+
+      // Refresh gallery
+      const response = await fetch('/api/gallery');
+      const data = await response.json();
+      if (response.ok) {
+        setGallery(data.images || []);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload images. Please try again.', { id: uploadToast });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Handle image deletion
+  const handleDeleteImage = async (imageId) => {
+    try {
+      const response = await fetch('/api/gallery/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageId }),
+      });
+
+      if (response.ok) {
+        setGallery(gallery.filter((img) => img._id !== imageId));
+        toast.success('Image deleted successfully!');
+      } else {
+        const data = await response.json();
+        toast.error(data.message || 'Failed to delete image');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      toast.error('Error deleting image');
+    }
+  };
 
   // Handle player approval
   const handleApprovePlayer = async (playerId) => {
@@ -123,10 +275,9 @@ const AdminDashboard = () => {
       });
 
       if (response.ok) {
-        // Update local state
-        const player = pendingPlayers.find(p => p._id === playerId);
-        setPendingPlayers(pendingPlayers.filter(p => p._id !== playerId));
-        setPlayers([...players, { ...player, status: "approved" }]);
+        const player = pendingPlayers.find((p) => p._id === playerId);
+        setPendingPlayers(pendingPlayers.filter((p) => p._id !== playerId));
+        setPlayers([...players, { ...player, status: 'approved' }]);
       }
     } catch (error) {
       console.error('Error approving player:', error);
@@ -145,7 +296,7 @@ const AdminDashboard = () => {
       });
 
       if (response.ok) {
-        setPendingPlayers(pendingPlayers.filter(p => p._id !== playerId));
+        setPendingPlayers(pendingPlayers.filter((p) => p._id !== playerId));
       }
     } catch (error) {
       console.error('Error rejecting player:', error);
@@ -164,7 +315,7 @@ const AdminDashboard = () => {
       });
 
       if (response.ok) {
-        setPlayers(players.filter(p => p._id !== playerId));
+        setPlayers(players.filter((p) => p._id !== playerId));
         setPlayerToDelete(null);
       }
     } catch (error) {
@@ -172,30 +323,48 @@ const AdminDashboard = () => {
     }
   };
 
-
   // Handle adding new match
   const handleAddMatch = (newMatch) => {
-    setMatches([...matches, { ...newMatch, id: Date.now(), status: "scheduled" }]);
-  };
-
-  // Handle adding gallery image
-  const handleAddImage = (file, caption) => {
-    const newImage = {
-      id: Date.now(),
-      url: URL.createObjectURL(file),
-      caption
-    };
-    setGallery([...gallery, newImage]);
+    setMatches([...matches, { ...newMatch, id: Date.now(), status: 'scheduled' }]);
   };
 
   return (
     <AdminProtected>
       <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white">
-        <div className="w-11/12 px-3 mx-auto pt-20 pb-16">
+        {/* Toaster for notifications */}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#1A1A1A',
+              color: '#fff',
+              border: '1px solid #2A2A2A',
+            },
+            success: {
+              iconTheme: {
+                primary: '#f0c22c',
+                secondary: '#1A1A1A',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#1A1A1A',
+              },
+            },
+            loading: {
+              iconTheme: {
+                primary: '#f0c22c',
+                secondary: '#1A1A1A',
+              },
+            },
+          }}
+        />
+
+        <div className="w-11/12 mx-auto pt-20 pb-16">
           {/* Animated background elements */}
           <div className="absolute inset-0 z-0 overflow-hidden">
-
-            {/* Floating particles */}
             {particlePositions.map((pos, i) => (
               <motion.div
                 key={i}
@@ -203,7 +372,7 @@ const AdminDashboard = () => {
                 style={{
                   top: pos.top,
                   left: pos.left,
-                  opacity: pos.opacity
+                  opacity: pos.opacity,
                 }}
                 animate={{
                   y: [0, -20, 0],
@@ -212,7 +381,7 @@ const AdminDashboard = () => {
                 transition={{
                   duration: 4,
                   repeat: Infinity,
-                  delay: i * 0.5
+                  delay: i * 0.5,
                 }}
               />
             ))}
@@ -247,15 +416,14 @@ const AdminDashboard = () => {
                       { id: 'players', label: 'Player Management', icon: '👥' },
                       { id: 'matches', label: 'Match Schedule', icon: '🏏' },
                       { id: 'stats', label: 'Player Stats', icon: '📈' },
-                      { id: 'gallery', label: 'Gallery', icon: '🖼️' }
+                      { id: 'gallery', label: 'Gallery', icon: '🖼️' },
                     ].map((tab) => (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${activeTab === tab.id
-                          ? 'bg-[#D4AF37] text-black font-bold'
-                          : 'text-white hover:bg-[#2a2a2a]'
-                          }`}
+                        className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${
+                          activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
+                        }`}
                       >
                         <span className="text-xl">{tab.icon}</span>
                         <span>{tab.label}</span>
@@ -265,25 +433,23 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              {/* Content area - 3/4 width on large screens, full width on small */}
+              {/* Content area */}
               <div className="w-full lg:w-3/4">
-                {/* Mobile tabs - shown only on small/medium devices */}
+                {/* Mobile tabs */}
                 <div className="lg:hidden bg-[#1a1a1a] rounded-xl p-2 mb-6 flex flex-wrap gap-2">
                   {[
                     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-                    { id: 'profile', label: 'Profile', icon: '👤' },
                     { id: 'players', label: 'Players', icon: '👥' },
                     { id: 'matches', label: 'Matches', icon: '🏏' },
                     { id: 'stats', label: 'Stats', icon: '📈' },
-                    { id: 'gallery', label: 'Gallery', icon: '🖼️' }
+                    { id: 'gallery', label: 'Gallery', icon: '🖼️' },
                   ].map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 ${activeTab === tab.id
-                        ? 'bg-[#D4AF37] text-black font-bold'
-                        : 'text-white hover:bg-[#2a2a2a]'
-                        }`}
+                      className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 ${
+                        activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
+                      }`}
                     >
                       <span>{tab.icon}</span>
                       <span className="hidden sm:inline">{tab.label}</span>
@@ -296,15 +462,8 @@ const AdminDashboard = () => {
                   <AnimatePresence mode="wait">
                     {/* Dashboard Tab */}
                     {activeTab === 'dashboard' && (
-                      <motion.div
-                        key="dashboard"
-                        variants={tabVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
+                      <motion.div key="dashboard" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <h2 className="text-2xl font-bold mb-6 text-[#D4AF37]">Team Overview</h2>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                           <div className="bg-[#0A0A0A] p-4 rounded-lg text-center">
                             <div className="text-3xl font-bold text-[#D4AF37]">{players.length}</div>
@@ -319,25 +478,23 @@ const AdminDashboard = () => {
                             <div className="text-gray-400">Scheduled Matches</div>
                           </div>
                         </div>
-
                         <div className="grid md:grid-cols-2 gap-6">
-                          {/* Upcoming Matches */}
                           <div>
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Upcoming Matches</h3>
                             <div className="space-y-3">
-                              {matches.slice(0, 3).map(match => (
+                              {matches.slice(0, 3).map((match) => (
                                 <div key={match.id} className="bg-[#0A0A0A] p-3 rounded-lg">
                                   <div className="flex justify-between items-center">
                                     <span className="font-bold">Vs {match.opponent}</span>
                                     <span className="text-sm text-gray-400">{match.date}</span>
                                   </div>
-                                  <p className="text-sm text-gray-400">{match.venue} • {match.time}</p>
+                                  <p className="text-sm text-gray-400">
+                                    {match.venue} • {match.time}
+                                  </p>
                                 </div>
                               ))}
                             </div>
                           </div>
-
-                          {/* Recent Activity */}
                           <div>
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Recent Activity</h3>
                             <div className="space-y-3">
@@ -363,21 +520,13 @@ const AdminDashboard = () => {
 
                     {/* Players Management Tab */}
                     {activeTab === 'players' && (
-                      <motion.div
-                        key="players"
-                        variants={tabVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
+                      <motion.div key="players" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <h2 className="text-2xl font-bold mb-6 text-[#D4AF37]">Player Management</h2>
-
-                        {/* Pending Approvals */}
                         {pendingPlayers.length > 0 && (
                           <div className="mb-8">
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Pending Approvals</h3>
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {pendingPlayers.map(player => (
+                              {pendingPlayers.map((player) => (
                                 <div key={player._id} className="bg-[#0A0A0A] rounded-xl p-4 border border-[#D4AF37]">
                                   <div className="flex items-center space-x-3 mb-3">
                                     <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center">
@@ -393,9 +542,15 @@ const AdminDashboard = () => {
                                     </div>
                                   </div>
                                   <div className="text-sm space-y-1 mb-4">
-                                    <p><span className="text-gray-400">Age:</span> {player.age}</p>
-                                    <p><span className="text-gray-400">Batting:</span> {player.battingStyle}</p>
-                                    <p><span className="text-gray-400">Bowling:</span> {player.bowlingStyle}</p>
+                                    <p>
+                                      <span className="text-gray-400">Age:</span> {player.age}
+                                    </p>
+                                    <p>
+                                      <span className="text-gray-400">Batting:</span> {player.battingStyle}
+                                    </p>
+                                    <p>
+                                      <span className="text-gray-400">Bowling:</span> {player.bowlingStyle}
+                                    </p>
                                   </div>
                                   <div className="flex space-x-2">
                                     <button
@@ -416,10 +571,7 @@ const AdminDashboard = () => {
                             </div>
                           </div>
                         )}
-
-                        {/* Current Players */}
                         <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Current Players</h3>
-                        {/* Desktop Table */}
                         <div className="hidden sm:block overflow-x-auto">
                           <table className="w-full">
                             <thead>
@@ -432,7 +584,7 @@ const AdminDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {players.map(player => (
+                              {players.map((player) => (
                                 <tr key={player._id} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
                                   <td className="py-3 flex items-center space-x-3">
                                     <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
@@ -463,10 +615,8 @@ const AdminDashboard = () => {
                             </tbody>
                           </table>
                         </div>
-
-                        {/* Mobile Card Layout */}
                         <div className="sm:hidden space-y-4">
-                          {players.map(player => (
+                          {players.map((player) => (
                             <div key={player._id} className="p-4 border border-[#2a2a2a] rounded-lg hover:bg-[#0A0A0A]">
                               <div className="flex items-center space-x-3 mb-2">
                                 <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
@@ -481,9 +631,15 @@ const AdminDashboard = () => {
                                   <div className="text-sm text-gray-400">{player.email}</div>
                                 </div>
                               </div>
-                              <div className="text-sm mb-1"><span className="font-semibold">Category:</span> {player.category}</div>
-                              <div className="text-sm mb-1"><span className="font-semibold">Batting:</span> {player.battingStyle}</div>
-                              <div className="text-sm mb-1"><span className="font-semibold">Bowling:</span> {player.bowlingStyle}</div>
+                              <div className="text-sm mb-1">
+                                <span className="font-semibold">Category:</span> {player.category}
+                              </div>
+                              <div className="text-sm mb-1">
+                                <span className="font-semibold">Batting:</span> {player.battingStyle}
+                              </div>
+                              <div className="text-sm mb-1">
+                                <span className="font-semibold">Bowling:</span> {player.bowlingStyle}
+                              </div>
                               <button
                                 onClick={() => setPlayerToDelete(player)}
                                 className="text-red-500 hover:underline mt-2"
@@ -493,8 +649,6 @@ const AdminDashboard = () => {
                             </div>
                           ))}
                         </div>
-
-                        {/* Delete Confirmation Modal */}
                         {playerToDelete && (
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -506,7 +660,7 @@ const AdminDashboard = () => {
                               initial={{ scale: 0.9, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               exit={{ scale: 0.9, opacity: 0 }}
-                              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
                               className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md"
                             >
                               <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Removal</h3>
@@ -533,8 +687,6 @@ const AdminDashboard = () => {
                             </motion.div>
                           </motion.div>
                         )}
-
-                        {/* Reject Confirmation Modal */}
                         {playerToReject && (
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -546,7 +698,7 @@ const AdminDashboard = () => {
                               initial={{ scale: 0.9, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               exit={{ scale: 0.9, opacity: 0 }}
-                              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
                               className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md"
                             >
                               <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Rejection</h3>
@@ -578,30 +730,24 @@ const AdminDashboard = () => {
 
                     {/* Matches Tab */}
                     {activeTab === 'matches' && (
-                      <motion.div
-                        key="matches"
-                        variants={tabVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
+                      <motion.div key="matches" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
                           <h2 className="text-2xl font-bold text-[#D4AF37]">Match Schedule</h2>
-                          <button className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg">
-                            + New Match
-                          </button>
+                          <button className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg">+ New Match</button>
                         </div>
-
                         <div className="grid md:grid-cols-2 gap-6">
-                          {matches.map(match => (
+                          {matches.map((match) => (
                             <div key={match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
                               <div className="flex justify-between items-start mb-4">
                                 <h3 className="text-xl font-bold">Vs {match.opponent}</h3>
-                                <span className={`px-2 py-1 rounded-full text-xs ${match.status === 'scheduled' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs ${
+                                    match.status === 'scheduled' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'
+                                  }`}
+                                >
                                   {match.status}
                                 </span>
                               </div>
-
                               <div className="space-y-2 mb-4">
                                 <div className="flex">
                                   <div className="w-24 text-gray-400">Date</div>
@@ -624,14 +770,9 @@ const AdminDashboard = () => {
                                   <div>{match.team}</div>
                                 </div>
                               </div>
-
                               <div className="flex space-x-2 pt-3">
-                                <button className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg">
-                                  Edit
-                                </button>
-                                <button className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg">
-                                  Cancel
-                                </button>
+                                <button className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg">Edit</button>
+                                <button className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg">Cancel</button>
                               </div>
                             </div>
                           ))}
@@ -641,15 +782,8 @@ const AdminDashboard = () => {
 
                     {/* Player Stats Tab */}
                     {activeTab === 'stats' && (
-                      <motion.div
-                        key="stats"
-                        variants={tabVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
+                      <motion.div key="stats" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <h2 className="text-2xl font-bold mb-6 text-[#D4AF37]">Player Statistics</h2>
-
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
@@ -664,7 +798,7 @@ const AdminDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {stats.map(stat => (
+                              {stats.map((stat) => (
                                 <tr key={stat.playerId} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
                                   <td className="py-3 font-medium">{stat.name}</td>
                                   <td className="py-3">{stat.matches}</td>
@@ -678,35 +812,39 @@ const AdminDashboard = () => {
                             </tbody>
                           </table>
                         </div>
-
                         <div className="mt-8 grid md:grid-cols-2 gap-6">
                           <div>
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Top Batsmen</h3>
                             <div className="space-y-3">
-                              {stats.sort((a, b) => b.runs - a.runs).slice(0, 3).map((stat, index) => (
-                                <div key={stat.playerId} className="bg-[#0A0A0A] p-3 rounded-lg flex justify-between items-center">
-                                  <div className="flex items-center space-x-3">
-                                    <span className="text-[#D4AF37] font-bold">#{index + 1}</span>
-                                    <span>{stat.name}</span>
+                              {stats
+                                .sort((a, b) => b.runs - a.runs)
+                                .slice(0, 3)
+                                .map((stat, index) => (
+                                  <div key={stat.playerId} className="bg-[#0A0A0A] p-3 rounded-lg flex justify-between items-center">
+                                    <div className="flex items-center space-x-3">
+                                      <span className="text-[#D4AF37] font-bold">#{index + 1}</span>
+                                      <span>{stat.name}</span>
+                                    </div>
+                                    <span className="font-bold">{stat.runs} runs</span>
                                   </div>
-                                  <span className="font-bold">{stat.runs} runs</span>
-                                </div>
-                              ))}
+                                ))}
                             </div>
                           </div>
-
                           <div>
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Top Bowlers</h3>
                             <div className="space-y-3">
-                              {stats.sort((a, b) => b.wickets - a.wickets).slice(0, 3).map((stat, index) => (
-                                <div key={stat.playerId} className="bg-[#0A0A0A] p-3 rounded-lg flex justify-between items-center">
-                                  <div className="flex items-center space-x-3">
-                                    <span className="text-[#D4AF37] font-bold">#{index + 1}</span>
-                                    <span>{stat.name}</span>
+                              {stats
+                                .sort((a, b) => b.wickets - a.wickets)
+                                .slice(0, 3)
+                                .map((stat, index) => (
+                                  <div key={stat.playerId} className="bg-[#0A0A0A] p-3 rounded-lg flex justify-between items-center">
+                                    <div className="flex items-center space-x-3">
+                                      <span className="text-[#D4AF37] font-bold">#{index + 1}</span>
+                                      <span>{stat.name}</span>
+                                    </div>
+                                    <span className="font-bold">{stat.wickets} wickets</span>
                                   </div>
-                                  <span className="font-bold">{stat.wickets} wickets</span>
-                                </div>
-                              ))}
+                                ))}
                             </div>
                           </div>
                         </div>
@@ -715,46 +853,258 @@ const AdminDashboard = () => {
 
                     {/* Gallery Tab */}
                     {activeTab === 'gallery' && (
-                      <motion.div
-                        key="gallery"
-                        variants={tabVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                      >
+                      <motion.div key="gallery" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
                           <h2 className="text-2xl font-bold text-[#D4AF37]">Gallery Management</h2>
-                          <button className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg">
-                            + Add Image
-                          </button>
+                          <motion.button
+                            onClick={() => setShowUploadModal(true)}
+                            className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg flex items-center gap-2"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Upload Photos
+                          </motion.button>
                         </div>
-
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {gallery.map(item => (
-                            <div key={item.id} className="relative group">
+                          {gallery.map((item) => (
+                            <div key={item._id} className="relative group">
                               <div className="aspect-square bg-[#0A0A0A] rounded-xl overflow-hidden">
-                                <div className="w-full h-full bg-gradient-to-br from-[#2a2a2a] to-[#0A0A0A] flex items-center justify-center">
-                                  <span className="text-4xl">🏏</span>
-                                </div>
+                                <Image
+                                  src={item.image || '/default-gallery.jpg'}
+                                  alt={item.title || 'Gallery image'}
+                                  fill
+                                  className="object-cover"
+                                />
                               </div>
                               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                                 <div className="text-center p-3">
-                                  <p className="font-medium mb-2">{item.caption}</p>
+                                  <p className="font-medium mb-2">{item.title || 'Profile'}</p>
                                   <div className="flex space-x-2 justify-center">
                                     <button className="text-[#D4AF37] hover:underline">Edit</button>
-                                    <button className="text-red-500 hover:underline">Delete</button>
+                                    <button
+                                      onClick={() => setImageToDelete(item)}
+                                      className="text-red-500 hover:underline"
+                                    >
+                                      Delete
+                                    </button>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           ))}
                         </div>
+                        {gallery.length === 0 && (
+                          <div className="text-center py-16">
+                            <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <h3 className="text-xl font-bold text-gray-400">No photos found</h3>
+                            <p className="text-gray-500 mt-2">Upload some photos to get started</p>
+                          </div>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               </div>
             </div>
+
+            {/* Upload Modal */}
+            <AnimatePresence>
+              {showUploadModal && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+                  onClick={() => !isUploading && setShowUploadModal(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] w-full max-w-2xl max-h-[90vh] flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-6 overflow-y-auto">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-[#D4AF37]">Upload Photos</h2>
+                        <button
+                          onClick={() => !isUploading && setShowUploadModal(false)}
+                          className="text-gray-400 hover:text-white"
+                          disabled={isUploading}
+                        >
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+                          <select
+                            value={uploadData.category}
+                            onChange={(e) => setUploadData({ ...uploadData, category: e.target.value })}
+                            className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                            disabled={isUploading}
+                          >
+                            {galleryCategories.map((category) => (
+                              <option key={category.id} value={category.id}>
+                                {category.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Title (for all images)</label>
+                          <input
+                            type="text"
+                            value={uploadData.title}
+                            onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
+                            placeholder="Enter a title for your images"
+                            className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                            disabled={isUploading}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">Select Images</label>
+                          <div className="flex items-center justify-center w-full">
+                            <label
+                              className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${
+                                isUploading ? 'border-gray-600 cursor-not-allowed' : 'border-gray-600 hover:border-[#D4AF37]'
+                              } bg-[#2a2a2a]`}
+                            >
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg className="w-8 h-8 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                                  />
+                                </svg>
+                                <p className="mb-2 text-sm text-gray-400">Click to upload or drag and drop</p>
+                                <p className="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                              </div>
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                onChange={handleImageSelect}
+                                accept="image/*"
+                                disabled={isUploading}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                        {uploadData.previews.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-medium text-gray-300 mb-3">Selected Images ({uploadData.previews.length})</h3>
+                            <div className="grid grid-cols-3 gap-3">
+                              {uploadData.previews.map((preview, index) => (
+                                <div key={index} className="relative group">
+                                  <img src={preview} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                                  {!isUploading && (
+                                    <button
+                                      onClick={() => removeImage(index)}
+                                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          onClick={handleUpload}
+                          disabled={isUploading || uploadData.images.length === 0}
+                          className={`w-full py-3 px-4 rounded-lg font-semibold ${
+                            isUploading || uploadData.images.length === 0
+                              ? 'bg-gray-600 cursor-not-allowed'
+                              : 'bg-[#D4AF37] hover:bg-[#c59a2f] text-black'
+                          }`}
+                        >
+                          {isUploading ? (
+                            <div className="flex items-center justify-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Uploading...
+                            </div>
+                          ) : (
+                            `Upload ${uploadData.images.length} Image${uploadData.images.length !== 1 ? 's' : ''}`
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+              {imageToDelete && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                    className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md"
+                  >
+                    <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Deletion</h3>
+                    <p className="mb-6">
+                      Are you sure you want to delete the image "{imageToDelete.title || 'Profile'}"? This action cannot be undone.
+                    </p>
+                    <div className="flex space-x-4 justify-end">
+                      <button
+                        onClick={() => setImageToDelete(null)}
+                        className="px-4 py-2 rounded-lg border border-gray-600 hover:bg-gray-800"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleDeleteImage(imageToDelete._id);
+                          setImageToDelete(null);
+                        }}
+                        className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                      >
+                        Confirm Deletion
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
