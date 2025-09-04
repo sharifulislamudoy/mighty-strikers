@@ -63,6 +63,9 @@ const Navbar = () => {
 
   // Get username from session for dynamic route
   const username = session?.user?.username || session?.user?.name?.toLowerCase().replace(/\s+/g, '-');
+  
+  // Check if user is admin
+  const isAdmin = session?.user?.role === 'admin';
 
   return (
     <>
@@ -148,6 +151,17 @@ const Navbar = () => {
                           {session.user?.role}
                         </p>
                       </div>
+                      
+                      {/* Admin Dashboard Link */}
+                      {isAdmin && (
+                        <Link
+                          href="/player/dashboard/admin"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors"
+                        >
+                          Admin Dashboard
+                        </Link>
+                      )}
                       
                       <Link
                         href={`/player/dashboard/${username}`}
@@ -247,10 +261,27 @@ const Navbar = () => {
                   {/* Mobile User Menu or Join Button */}
                   {status === 'authenticated' ? (
                     <>
+                      {/* Admin Dashboard Link for Mobile */}
+                      {isAdmin && (
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                        >
+                          <Link
+                            href="/player/dashboard/admin"
+                            onClick={() => setIsOpen(false)}
+                            className="block py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
+                          >
+                            Admin Dashboard
+                          </Link>
+                        </motion.div>
+                      )}
+                      
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 1 : 0)) * 0.1 }}
                       >
                         <Link
                           href={`/player/dashboard/${username}`}
@@ -263,7 +294,7 @@ const Navbar = () => {
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: (navItems.length + 1) * 0.1 }}
+                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 2 : 1)) * 0.1 }}
                       >
                         <button
                           onClick={handleLogoutClick}

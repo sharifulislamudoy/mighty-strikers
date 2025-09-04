@@ -14,13 +14,6 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState([]);
   const [playerToDelete, setPlayerToDelete] = useState(null);
   const [playerToReject, setPlayerToReject] = useState(null);
-  const [adminData, setAdminData] = useState({
-    name: "Admin User",
-    email: "admin@cricketclub.com",
-    phone: "+1 234-567-8900",
-    role: "Administrator",
-    joinDate: "2023-01-15"
-  });
 
   // Animation variants
   const tabVariants = {
@@ -45,69 +38,6 @@ const AdminDashboard = () => {
 
   // Load mock data
   useEffect(() => {
-    // Mock players data
-    // setPlayers([
-    //   {
-    //     _id: "1",
-    //     name: "Mohona Akter Mukta",
-    //     username: "mohona-akter-mukta-",
-    //     phone: "01995322080",
-    //     email: "surifroton305651@gmail.com",
-    //     image: "https://res.cloudinary.com/dohhfubsa/image/upload/v1756730697/IMG20250",
-    //     category: "Batsman",
-    //     specialties: ["Right Handed Batting", "Agile Runner"],
-    //     battingStyle: "Right Handed",
-    //     bowlingStyle: "Left Arm Medium",
-    //     age: 24,
-    //     profileUrl: "https://hi.com",
-    //     role: "player",
-    //     likes: 1,
-    //     status: "approved",
-    //     createdAt: "2025-09-01T12:45:00.404+00:00"
-    //   },
-    //   {
-    //     _id: "2",
-    //     name: "John Smith",
-    //     username: "john-smith",
-    //     phone: "0123456789",
-    //     email: "john@example.com",
-    //     image: "/default-player.jpg",
-    //     category: "Bowler",
-    //     specialties: ["Fast Bowling", "Yorker Specialist"],
-    //     battingStyle: "Right Handed",
-    //     bowlingStyle: "Right Arm Fast",
-    //     age: 28,
-    //     profileUrl: "https://example.com",
-    //     role: "player",
-    //     likes: 5,
-    //     status: "approved",
-    //     createdAt: "2025-08-15T10:30:00.404+00:00"
-    //   }
-    // ]);
-
-    // Mock pending players
-    // setPendingPlayers([
-    //   {
-    //     _id: "3",
-    //     name: "New Player",
-    //     username: "new-player",
-    //     phone: "0123456789",
-    //     email: "new@example.com",
-    //     image: "/default-player.jpg",
-    //     category: "All-Rounder",
-    //     specialties: ["Batting", "Bowling"],
-    //     battingStyle: "Left Handed",
-    //     bowlingStyle: "Right Arm Offbreak",
-    //     age: 22,
-    //     profileUrl: "https://example.com",
-    //     role: "player",
-    //     likes: 0,
-    //     status: "pending",
-    //     createdAt: "2025-09-03T08:15:00.404+00:00"
-    //   }
-    // ]);
-
-    // Mock matches
     setMatches([
       {
         id: 1,
@@ -261,7 +191,7 @@ const AdminDashboard = () => {
   return (
     <AdminProtected>
       <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white">
-        <div className="w-11/12 mx-auto pt-20 pb-16">
+        <div className="w-11/12 px-3 mx-auto pt-20 pb-16">
           {/* Animated background elements */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             {/* Cricket field circles */}
@@ -321,7 +251,6 @@ const AdminDashboard = () => {
                   <div className="space-y-2">
                     {[
                       { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-                      { id: 'profile', label: 'Admin Profile', icon: '👤' },
                       { id: 'players', label: 'Player Management', icon: '👥' },
                       { id: 'matches', label: 'Match Schedule', icon: '🏏' },
                       { id: 'stats', label: 'Player Stats', icon: '📈' },
@@ -433,101 +362,6 @@ const AdminDashboard = () => {
                                 </div>
                                 <p className="text-gray-400 text-sm">New match against Thunder Bolts added</p>
                               </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* Profile Tab */}
-                    {activeTab === 'profile' && (
-                      <motion.div
-                        key="profile"
-                        variants={tabVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        className="grid md:grid-cols-2 gap-6"
-                      >
-                        <div>
-                          <h2 className="text-2xl font-bold mb-6 text-[#D4AF37]">Admin Profile</h2>
-                          <div className="space-y-4">
-                            <div className="flex items-center space-x-4 mb-6">
-                              <div className="w-24 h-24 rounded-full bg-[#D4AF37] flex items-center justify-center text-3xl font-bold text-black">
-                                {adminData.name.charAt(0)}
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-bold">{adminData.name}</h3>
-                                <p className="text-gray-400">{adminData.role}</p>
-                              </div>
-                            </div>
-
-                            <div className="space-y-3">
-                              <div>
-                                <label className="block text-gray-400 mb-1">Full Name</label>
-                                <input
-                                  type="text"
-                                  value={adminData.name}
-                                  onChange={(e) => setAdminData({ ...adminData, name: e.target.value })}
-                                  className="w-full bg-[#0A0A0A] rounded-lg px-4 py-2 border border-[#2a2a2a] focus:border-[#D4AF37] focus:outline-none"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-gray-400 mb-1">Email Address</label>
-                                <input
-                                  type="email"
-                                  value={adminData.email}
-                                  onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
-                                  className="w-full bg-[#0A0A0A] rounded-lg px-4 py-2 border border-[#2a2a2a] focus:border-[#D4AF37] focus:outline-none"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block text-gray-400 mb-1">Phone Number</label>
-                                <input
-                                  type="tel"
-                                  value={adminData.phone}
-                                  onChange={(e) => setAdminData({ ...adminData, phone: e.target.value })}
-                                  className="w-full bg-[#0A0A0A] rounded-lg px-4 py-2 border border-[#2a2a2a] focus:border-[#D4AF37] focus:outline-none"
-                                />
-                              </div>
-
-                              <div className="pt-4">
-                                <button className="bg-[#D4AF37] text-black font-semibold py-2 px-6 rounded-lg">
-                                  Update Profile
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Admin Statistics</h3>
-                          <div className="grid grid-cols-2 gap-4 mb-6">
-                            <div className="bg-[#0A0A0A] p-4 rounded-lg text-center">
-                              <div className="text-3xl font-bold text-[#D4AF37]">12</div>
-                              <div className="text-gray-400">Players Added</div>
-                            </div>
-                            <div className="bg-[#0A0A0A] p-4 rounded-lg text-center">
-                              <div className="text-3xl font-bold text-[#D4AF37]">8</div>
-                              <div className="text-gray-400">Matches Scheduled</div>
-                            </div>
-                          </div>
-
-                          <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">System Information</h3>
-                          <div className="bg-[#0A0A0A] p-4 rounded-lg">
-                            <div className="flex justify-between py-2 border-b border-[#2a2a2a]">
-                              <span className="text-gray-400">Last Login</span>
-                              <span>Today, 09:42 AM</span>
-                            </div>
-                            <div className="flex justify-between py-2 border-b border-[#2a2a2a]">
-                              <span className="text-gray-400">Account Created</span>
-                              <span>{adminData.joinDate}</span>
-                            </div>
-                            <div className="flex justify-between py-2">
-                              <span className="text-gray-400">Role</span>
-                              <span className="text-[#D4AF37]">{adminData.role}</span>
                             </div>
                           </div>
                         </div>
@@ -669,8 +503,19 @@ const AdminDashboard = () => {
 
                         {/* Delete Confirmation Modal */}
                         {playerToDelete && (
-                          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-                            <div className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md">
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+                          >
+                            <motion.div
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.9, opacity: 0 }}
+                              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                              className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md"
+                            >
                               <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Removal</h3>
                               <p className="mb-6">
                                 Are you sure you want to remove {playerToDelete.name} from the team? This action cannot be undone.
@@ -692,14 +537,25 @@ const AdminDashboard = () => {
                                   Confirm Removal
                                 </button>
                               </div>
-                            </div>
-                          </div>
+                            </motion.div>
+                          </motion.div>
                         )}
 
                         {/* Reject Confirmation Modal */}
                         {playerToReject && (
-                          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-                            <div className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md">
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+                          >
+                            <motion.div
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.9, opacity: 0 }}
+                              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+                              className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md"
+                            >
                               <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Rejection</h3>
                               <p className="mb-6">
                                 Are you sure you want to reject {playerToReject.name}'s application? This action cannot be undone.
@@ -721,8 +577,8 @@ const AdminDashboard = () => {
                                   Confirm Rejection
                                 </button>
                               </div>
-                            </div>
-                          </div>
+                            </motion.div>
+                          </motion.div>
                         )}
                       </motion.div>
                     )}
