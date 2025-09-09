@@ -6,6 +6,7 @@ import Image from 'next/image';
 import AdminProtected from '@/Components/AdminProtected';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
+import NewMatchModal from '@/Components/NewMatchModal';
 
 const AdminDashboard = () => {
   const { data: session } = useSession();
@@ -26,6 +27,8 @@ const AdminDashboard = () => {
     images: [],
     previews: [],
   });
+  const [showNewMatchModal, setShowNewMatchModal] = useState(false);
+
 
   // Animation variants
   const tabVariants = {
@@ -79,51 +82,29 @@ const AdminDashboard = () => {
 
   // Load mock data for matches and stats
   useEffect(() => {
-    setMatches([
-      {
-        id: 1,
-        opponent: 'Thunder Bolts',
-        date: '2025-09-15',
-        time: '14:00',
-        venue: 'City Cricket Ground',
-        status: 'scheduled',
-        type: 'T20',
-        team: 'First XI',
-      },
-      {
-        id: 2,
-        opponent: 'Royal Strikers',
-        date: '2025-09-22',
-        time: '15:30',
-        venue: 'National Stadium',
-        status: 'scheduled',
-        type: 'One Day',
-        team: 'First XI',
-      },
-    ]);
+    const fetchMatches = async () => {
+      try {
+        const response = await fetch('/api/matches', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-    setStats([
-      {
-        playerId: '1',
-        name: 'Mohona Akter Mukta',
-        matches: 15,
-        runs: 450,
-        highest: 87,
-        average: 32.14,
-        wickets: 3,
-        economy: 5.2,
-      },
-      {
-        playerId: '2',
-        name: 'John Smith',
-        matches: 12,
-        runs: 120,
-        highest: 35,
-        average: 12.0,
-        wickets: 18,
-        economy: 4.8,
-      },
-    ]);
+        if (!response.ok) {
+          throw new Error('Failed to fetch matches');
+        }
+
+        const data = await response.json();
+        setMatches(data);
+      } catch (error) {
+        console.error('Error fetching matches:', error);
+        // Optionally, set fallback data or handle error state
+        setMatches([]);
+      }
+    };
+
+    fetchMatches();
   }, []);
 
   // Fetch players from database
@@ -421,9 +402,8 @@ const AdminDashboard = () => {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${
-                          activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
-                        }`}
+                        className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
+                          }`}
                       >
                         <span className="text-xl">{tab.icon}</span>
                         <span>{tab.label}</span>
@@ -447,9 +427,8 @@ const AdminDashboard = () => {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 ${
-                        activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
-                      }`}
+                      className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 ${activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
+                        }`}
                     >
                       <span>{tab.icon}</span>
                       <span className="hidden sm:inline">{tab.label}</span>
@@ -483,7 +462,7 @@ const AdminDashboard = () => {
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Upcoming Matches</h3>
                             <div className="space-y-3">
                               {matches.slice(0, 3).map((match) => (
-                                <div key={match.id} className="bg-[#0A0A0A] p-3 rounded-lg">
+                                <div key={match.id || match._id} className="bg-[#0A0A0A] p-3 rounded-lg">
                                   <div className="flex justify-between items-center">
                                     <span className="font-bold">Vs {match.opponent}</span>
                                     <span className="text-sm text-gray-400">{match.date}</span>
@@ -733,17 +712,27 @@ const AdminDashboard = () => {
                       <motion.div key="matches" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
                           <h2 className="text-2xl font-bold text-[#D4AF37]">Match Schedule</h2>
-                          <button className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg">+ New Match</button>
+                          <button
+                            onClick={() => setShowNewMatchModal(true)}
+                            className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg"
+                          >
+                            + New Match
+                          </button>
                         </div>
                         <div className="grid md:grid-cols-2 gap-6">
                           {matches.map((match) => (
-                            <div key={match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
+                            <div key={match._id || match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
                               <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-xl font-bold">Vs {match.opponent}</h3>
+                                <div className="flex items-center gap-3">
+                                  <h3 className="text-xl font-bold">Vs {match.opponent}</h3>
+                                </div>
                                 <span
-                                  className={`px-2 py-1 rounded-full text-xs ${
-                                    match.status === 'scheduled' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'
-                                  }`}
+                                  className={`px-2 py-1 rounded-full text-xs ${match.status === 'scheduled'
+                                    ? 'bg-yellow-500/20 text-yellow-500'
+                                    : match.status === 'completed'
+                                      ? 'bg-green-500/20 text-green-500'
+                                      : 'bg-red-500/20 text-red-500'
+                                    }`}
                                 >
                                   {match.status}
                                 </span>
@@ -766,8 +755,8 @@ const AdminDashboard = () => {
                                   <div>{match.type}</div>
                                 </div>
                                 <div className="flex">
-                                  <div className="w-24 text-gray-400">Team</div>
-                                  <div>{match.team}</div>
+                                  <div className="w-24 text-gray-400">Overs</div>
+                                  <div>{match.overs}</div>
                                 </div>
                               </div>
                               <div className="flex space-x-2 pt-3">
@@ -977,9 +966,8 @@ const AdminDashboard = () => {
                           <label className="block text-sm font-medium text-gray-300 mb-2">Select Images</label>
                           <div className="flex items-center justify-center w-full">
                             <label
-                              className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${
-                                isUploading ? 'border-gray-600 cursor-not-allowed' : 'border-gray-600 hover:border-[#D4AF37]'
-                              } bg-[#2a2a2a]`}
+                              className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${isUploading ? 'border-gray-600 cursor-not-allowed' : 'border-gray-600 hover:border-[#D4AF37]'
+                                } bg-[#2a2a2a]`}
                             >
                               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                 <svg className="w-8 h-8 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1029,11 +1017,10 @@ const AdminDashboard = () => {
                         <button
                           onClick={handleUpload}
                           disabled={isUploading || uploadData.images.length === 0}
-                          className={`w-full py-3 px-4 rounded-lg font-semibold ${
-                            isUploading || uploadData.images.length === 0
-                              ? 'bg-gray-600 cursor-not-allowed'
-                              : 'bg-[#D4AF37] hover:bg-[#c59a2f] text-black'
-                          }`}
+                          className={`w-full py-3 px-4 rounded-lg font-semibold ${isUploading || uploadData.images.length === 0
+                            ? 'bg-gray-600 cursor-not-allowed'
+                            : 'bg-[#D4AF37] hover:bg-[#c59a2f] text-black'
+                            }`}
                         >
                           {isUploading ? (
                             <div className="flex items-center justify-center">
@@ -1104,6 +1091,12 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+            {/* Add this near your other modals */}
+            <NewMatchModal
+              isOpen={showNewMatchModal}
+              onClose={() => setShowNewMatchModal(false)}
+              onAddMatch={handleAddMatch}
+            />
           </div>
         </div>
       </div>
