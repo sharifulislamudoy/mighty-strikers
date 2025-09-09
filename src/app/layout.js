@@ -20,7 +20,7 @@ export const metadata = {
   openGraph: {
     title: "Mighty Strikers Cricket Club - Where Passion Meets Power!",
     description: "Join Mighty Strikers Cricket Club for competitive matches, and youth development programs. Elevate your cricket skills with our expert trainers and state-of-the-art facilities.",
-    url: "https://www.mighty-strikers.vercl.app",
+    url: "https://mighty-strikers.vercel.app/",
     siteName: "Mighty Strikers",
     images: [
       {
@@ -50,11 +50,8 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "google0dee5ccf4244c827.html",
-  },
   alternates: {
-    canonical: "https://www.mighty-strikers.vercel.app",
+    canonical: "https://mighty-strikers.vercel.app/",
   },
 };
 
@@ -65,6 +62,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/logo.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#1a472a" />
+        <meta name="google-site-verification" content="google0dee5ccf4244c827" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
