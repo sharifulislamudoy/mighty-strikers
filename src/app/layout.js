@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/logo.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#1a472a" />
-        <meta name="google-site-verification" content="google0dee5ccf4244c827" />
+        <meta name="google-site-verification" content="mnxa3sKPJ91f6rAGqbXyyIZYDSJBR1H8s_06QAASItM" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
