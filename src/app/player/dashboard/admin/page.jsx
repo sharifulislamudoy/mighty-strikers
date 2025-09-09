@@ -15,7 +15,8 @@ const AdminDashboard = () => {
   const [pendingPlayers, setPendingPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
   const [gallery, setGallery] = useState([]);
-  const [stats, setStats] = useState([]);
+  const [stats, setStats] = useState([]); // This will now hold actual player stats
+  const [loadingStats, setLoadingStats] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState(null);
   const [playerToReject, setPlayerToReject] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -32,6 +33,7 @@ const AdminDashboard = () => {
   const [showEditMatchModal, setShowEditMatchModal] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState(null);
+
   // Animation variants
   const tabVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -86,6 +88,118 @@ const AdminDashboard = () => {
     { id: 'gallery', label: 'Gallery', icon: '🖼️' },
   ];
 
+  // Fetch player stats from playerDetails collection
+  const fetchPlayerStats = async () => {
+    if (players.length === 0) return;
+    
+    setLoadingStats(true);
+    try {
+      const statsPromises = players.map(async (player) => {
+        try {
+          const response = await fetch(`/api/player-details/${player.username}`);
+          if (response.ok) {
+            const playerDetails = await response.json();
+            return {
+              playerId: player._id,
+              username: player.username,
+              name: player.name,
+              category: player.category,
+              image: player.image,
+              matches: playerDetails.matches || 0,
+              runs: playerDetails.runs || 0,
+              wickets: playerDetails.wickets || 0,
+              average: playerDetails.average || 0,
+              highest: playerDetails.bestBatting || '0 (0)',
+              economy: playerDetails.economy || 0,
+              bestBowling: playerDetails.bestBowling || '0/0',
+              halfCenturies: playerDetails.halfCenturies || 0,
+              centuries: playerDetails.centuries || 0,
+              thirties: playerDetails.thirties || 0,
+              threeWickets: playerDetails.threeWickets || 0,
+              fiveWickets: playerDetails.fiveWickets || 0,
+              maidens: playerDetails.maidens || 0,
+            };
+          } else {
+            // Return default stats if API fails
+            return {
+              playerId: player._id,
+              username: player.username,
+              name: player.name,
+              category: player.category,
+              image: player.image,
+              matches: 0,
+              runs: 0,
+              wickets: 0,
+              average: 0,
+              highest: '0 (0)',
+              economy: 0,
+              bestBowling: '0/0',
+              halfCenturies: 0,
+              centuries: 0,
+              thirties: 0,
+              threeWickets: 0,
+              fiveWickets: 0,
+              maidens: 0,
+            };
+          }
+        } catch (error) {
+          console.error(`Error fetching stats for ${player.username}:`, error);
+          // Return default stats on error
+          return {
+            playerId: player._id,
+            username: player.username,
+            name: player.name,
+            category: player.category,
+            image: player.image,
+            matches: 0,
+            runs: 0,
+            wickets: 0,
+            average: 0,
+            highest: '0 (0)',
+            economy: 0,
+            bestBowling: '0/0',
+            halfCenturies: 0,
+            centuries: 0,
+            thirties: 0,
+            threeWickets: 0,
+            fiveWickets: 0,
+            maidens: 0,
+          };
+        }
+      });
+
+      const allStats = await Promise.all(statsPromises);
+      setStats(allStats);
+    } catch (error) {
+      console.error('Error fetching player stats:', error);
+      toast.error('Failed to load player statistics');
+      // Set default stats for all players
+      const defaultStats = players.map(player => ({
+        playerId: player._id,
+        username: player.username,
+        name: player.name,
+        category: player.category,
+        image: player.image,
+        matches: 0,
+        runs: 0,
+        wickets: 0,
+        average: 0,
+        highest: '0 (0)',
+        economy: 0,
+        bestBowling: '0/0',
+        halfCenturies: 0,
+        centuries: 0,
+        thirties: 0,
+        threeWickets: 0,
+        fiveWickets: 0,
+        maidens: 0,
+      }));
+      setStats(defaultStats);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
   // Fetch gallery images from API
   useEffect(() => {
     const fetchGalleryImages = async () => {
@@ -108,7 +222,7 @@ const AdminDashboard = () => {
     fetchGalleryImages();
   }, []);
 
-  // Load mock data for matches and stats
+  // Load matches from API
   useEffect(() => {
     const fetchMatches = async () => {
       try {
@@ -141,16 +255,32 @@ const AdminDashboard = () => {
         const response = await fetch('/api/players');
         if (response.ok) {
           const playersData = await response.json();
-          setPlayers(playersData.filter((player) => player.status === 'approved'));
-          setPendingPlayers(playersData.filter((player) => player.status === 'pending'));
+          const approvedPlayers = playersData.filter((player) => player.status === 'approved');
+          const pendingPlayersData = playersData.filter((player) => player.status === 'pending');
+          
+          setPlayers(approvedPlayers);
+          setPendingPlayers(pendingPlayersData);
+          
+          // Fetch stats after players are loaded
+          if (approvedPlayers.length > 0) {
+            fetchPlayerStats();
+          }
         }
       } catch (error) {
         console.error('Error fetching players:', error);
+        toast.error('Failed to load players');
       }
     };
 
     fetchPlayers();
   }, []);
+
+  // Refetch stats when players change
+  useEffect(() => {
+    if (activeTab === 'stats' && players.length > 0) {
+      fetchPlayerStats();
+    }
+  }, [activeTab, players]);
 
   // Handle image selection for upload
   const handleImageSelect = (e) => {
@@ -284,10 +414,49 @@ const AdminDashboard = () => {
       if (response.ok) {
         const player = pendingPlayers.find((p) => p._id === playerId);
         setPendingPlayers(pendingPlayers.filter((p) => p._id !== playerId));
-        setPlayers([...players, { ...player, status: 'approved' }]);
+        const newApprovedPlayer = { ...player, status: 'approved' };
+        setPlayers([...players, newApprovedPlayer]);
+        
+        // Fetch stats for the newly approved player
+        if (newApprovedPlayer.username) {
+          try {
+            const statsResponse = await fetch(`/api/player-details/${newApprovedPlayer.username}`);
+            if (statsResponse.ok) {
+              const playerDetails = await statsResponse.json();
+              const newStat = {
+                playerId: newApprovedPlayer._id,
+                username: newApprovedPlayer.username,
+                name: newApprovedPlayer.name,
+                category: newApprovedPlayer.category,
+                image: newApprovedPlayer.image,
+                matches: playerDetails.matches || 0,
+                runs: playerDetails.runs || 0,
+                wickets: playerDetails.wickets || 0,
+                average: playerDetails.average || 0,
+                highest: playerDetails.bestBatting || '0 (0)',
+                economy: playerDetails.economy || 0,
+                bestBowling: playerDetails.bestBowling || '0/0',
+                halfCenturies: playerDetails.halfCenturies || 0,
+                centuries: playerDetails.centuries || 0,
+                thirties: playerDetails.thirties || 0,
+                threeWickets: playerDetails.threeWickets || 0,
+                fiveWickets: playerDetails.fiveWickets || 0,
+                maidens: playerDetails.maidens || 0,
+              };
+              setStats(prev => [...prev, newStat]);
+            }
+          } catch (error) {
+            console.error('Error fetching stats for approved player:', error);
+          }
+        }
+        
+        toast.success(`${player.name} approved successfully!`);
+      } else {
+        toast.error('Failed to approve player');
       }
     } catch (error) {
       console.error('Error approving player:', error);
+      toast.error('Error approving player');
     }
   };
 
@@ -304,9 +473,13 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         setPendingPlayers(pendingPlayers.filter((p) => p._id !== playerId));
+        toast.success('Player rejected successfully');
+      } else {
+        toast.error('Failed to reject player');
       }
     } catch (error) {
       console.error('Error rejecting player:', error);
+      toast.error('Error rejecting player');
     }
   };
 
@@ -323,10 +496,15 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         setPlayers(players.filter((p) => p._id !== playerId));
+        setStats(stats.filter((s) => s.playerId !== playerId));
         setPlayerToDelete(null);
+        toast.success('Player removed successfully');
+      } else {
+        toast.error('Failed to remove player');
       }
     } catch (error) {
       console.error('Error deleting player:', error);
+      toast.error('Error removing player');
     }
   };
 
@@ -397,6 +575,22 @@ const AdminDashboard = () => {
   const handleTabClick = (tabId) => {
     setActiveTab(tabId);
     setIsDrawerOpen(false);
+  };
+
+  // Get formatted best batting score
+  const formatBestBatting = (bestBatting) => {
+    if (typeof bestBatting === 'string' && bestBatting.includes('(')) {
+      return bestBatting;
+    }
+    return bestBatting || '0 (0)';
+  };
+
+  // Get formatted best bowling
+  const formatBestBowling = (bestBowling) => {
+    if (typeof bestBowling === 'string' && bestBowling.includes('/')) {
+      return bestBowling;
+    }
+    return bestBowling || '0/0';
   };
 
   return (
@@ -576,6 +770,12 @@ const AdminDashboard = () => {
                             <div className="text-3xl font-bold text-[#D4AF37]">{matches.length}</div>
                             <div className="text-gray-400">Scheduled Matches</div>
                           </div>
+                          <div className="bg-[#0A0A0A] p-4 rounded-lg text-center">
+                            <div className="text-3xl font-bold text-[#D4AF37]">
+                              {stats.reduce((sum, player) => sum + player.matches, 0)}
+                            </div>
+                            <div className="text-gray-400">Total Matches Played</div>
+                          </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-6">
                           <div>
@@ -592,24 +792,39 @@ const AdminDashboard = () => {
                                   </p>
                                 </div>
                               ))}
+                              {matches.length === 0 && (
+                                <div className="text-center py-4 text-gray-400">
+                                  No upcoming matches
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div>
-                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Recent Activity</h3>
+                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Top Performers</h3>
                             <div className="space-y-3">
                               <div className="bg-[#0A0A0A] p-3 rounded-lg">
                                 <div className="flex justify-between">
-                                  <span className="font-medium">Player approved</span>
-                                  <span className="text-gray-400 text-sm">2 hours ago</span>
+                                  <span className="font-medium">Top Run Scorer</span>
+                                  <span className="text-gray-400 text-sm">Season Stats</span>
                                 </div>
-                                <p className="text-gray-400 text-sm">Mohona Akter Mukta was added to the team</p>
+                                <p className="text-gray-400 text-sm">
+                                  {stats.length > 0 
+                                    ? `${stats.reduce((max, p) => p.runs > max.runs ? p : max, stats[0]).name}: ${stats.reduce((max, p) => p.runs > max ? p.runs : max, 0)} runs`
+                                    : 'No data available'
+                                  }
+                                </p>
                               </div>
                               <div className="bg-[#0A0A0A] p-3 rounded-lg">
                                 <div className="flex justify-between">
-                                  <span className="font-medium">Match scheduled</span>
-                                  <span className="text-gray-400 text-sm">1 day ago</span>
+                                  <span className="font-medium">Top Wicket Taker</span>
+                                  <span className="text-gray-400 text-sm">Season Stats</span>
                                 </div>
-                                <p className="text-gray-400 text-sm">New match against Thunder Bolts added</p>
+                                <p className="text-gray-400 text-sm">
+                                  {stats.length > 0 
+                                    ? `${stats.reduce((max, p) => p.wickets > max.wickets ? p : max, stats[0]).name}: ${stats.reduce((max, p) => p.wickets > max ? p.wickets : max, 0)} wickets`
+                                    : 'No data available'
+                                  }
+                                </p>
                               </div>
                             </div>
                           </div>
@@ -679,75 +894,93 @@ const AdminDashboard = () => {
                                 <th className="text-left py-3">Category</th>
                                 <th className="text-left py-3">Batting</th>
                                 <th className="text-left py-3">Bowling</th>
+                                <th className="text-left py-3">Matches</th>
+                                <th className="text-left py-3">Runs</th>
+                                <th className="text-left py-3">Wickets</th>
                                 <th className="text-left py-3">Actions</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {players.map((player) => (
-                                <tr key={player._id} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
-                                  <td className="py-3 flex items-center space-x-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
-                                      {player.image ? (
-                                        <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
-                                      ) : (
-                                        <span className="text-sm font-bold">{player.name.charAt(0)}</span>
-                                      )}
-                                    </div>
-                                    <div>
-                                      <div className="font-medium">{player.name}</div>
-                                      <div className="text-sm text-gray-400">{player.email}</div>
-                                    </div>
-                                  </td>
-                                  <td className="py-3 capitalize">{player.category}</td>
-                                  <td className="py-3">{player.battingStyle}</td>
-                                  <td className="py-3">{player.bowlingStyle}</td>
-                                  <td className="py-3">
-                                    <button
-                                      onClick={() => setPlayerToDelete(player)}
-                                      className="text-red-500 hover:underline"
-                                    >
-                                      Remove
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
+                              {players.map((player) => {
+                                const playerStat = stats.find(s => s.playerId === player._id);
+                                return (
+                                  <tr key={player._id} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
+                                    <td className="py-3 flex items-center space-x-3">
+                                      <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                        {player.image ? (
+                                          <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
+                                        ) : (
+                                          <span className="text-sm font-bold">{player.name.charAt(0)}</span>
+                                        )}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">{player.name}</div>
+                                        <div className="text-sm text-gray-400">{player.email}</div>
+                                      </div>
+                                    </td>
+                                    <td className="py-3 capitalize">{player.category}</td>
+                                    <td className="py-3">{player.battingStyle}</td>
+                                    <td className="py-3">{player.bowlingStyle}</td>
+                                    <td className="py-3">{playerStat?.matches || 0}</td>
+                                    <td className="py-3 font-medium text-[#D4AF37]">{playerStat?.runs || 0}</td>
+                                    <td className="py-3 font-medium text-[#D4AF37]">{playerStat?.wickets || 0}</td>
+                                    <td className="py-3">
+                                      <button
+                                        onClick={() => setPlayerToDelete(player)}
+                                        className="text-red-500 hover:underline"
+                                      >
+                                        Remove
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
                         <div className="sm:hidden space-y-4">
-                          {players.map((player) => (
-                            <div key={player._id} className="p-4 border border-[#2a2a2a] rounded-lg hover:bg-[#0A0A0A]">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
-                                  {player.image ? (
-                                    <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
-                                  ) : (
-                                    <span className="text-sm font-bold">{player.name.charAt(0)}</span>
-                                  )}
+                          {players.map((player) => {
+                            const playerStat = stats.find(s => s.playerId === player._id);
+                            return (
+                              <div key={player._id} className="p-4 border border-[#2a2a2a] rounded-lg hover:bg-[#0A0A0A]">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                    {player.image ? (
+                                      <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
+                                    ) : (
+                                      <span className="text-sm font-bold">{player.name.charAt(0)}</span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">{player.name}</div>
+                                    <div className="text-sm text-gray-400">{player.email}</div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <div className="font-medium">{player.name}</div>
-                                  <div className="text-sm text-gray-400">{player.email}</div>
+                                <div className="text-sm mb-1">
+                                  <span className="font-semibold">Category:</span> {player.category}
                                 </div>
+                                <div className="text-sm mb-1">
+                                  <span className="font-semibold">Batting:</span> {player.battingStyle}
+                                </div>
+                                <div className="text-sm mb-1">
+                                  <span className="font-semibold">Bowling:</span> {player.bowlingStyle}
+                                </div>
+                                <div className="flex justify-between text-sm mt-2">
+                                  <span>Runs: <span className="font-medium text-[#D4AF37]">{playerStat?.runs || 0}</span></span>
+                                  <span>Wickets: <span className="font-medium text-[#D4AF37]">{playerStat?.wickets || 0}</span></span>
+                                </div>
+                                <button
+                                  onClick={() => setPlayerToDelete(player)}
+                                  className="text-red-500 hover:underline mt-2"
+                                >
+                                  Remove
+                                </button>
                               </div>
-                              <div className="text-sm mb-1">
-                                <span className="font-semibold">Category:</span> {player.category}
-                              </div>
-                              <div className="text-sm mb-1">
-                                <span className="font-semibold">Batting:</span> {player.battingStyle}
-                              </div>
-                              <div className="text-sm mb-1">
-                                <span className="font-semibold">Bowling:</span> {player.bowlingStyle}
-                              </div>
-                              <button
-                                onClick={() => setPlayerToDelete(player)}
-                                className="text-red-500 hover:underline mt-2"
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
+                        
+                        {/* Player Delete and Reject Modals */}
                         {playerToDelete && (
                           <motion.div
                             initial={{ opacity: 0 }}
@@ -922,78 +1155,278 @@ const AdminDashboard = () => {
                               </div>
                             </div>
                           ))}
+                          {matches.length === 0 && (
+                            <div className="col-span-full text-center py-16">
+                              <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <h3 className="text-xl font-bold text-gray-400">No matches scheduled</h3>
+                              <p className="text-gray-500 mt-2">Create your first match to get started</p>
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     )}
 
-                    {/* Player Stats Tab */}
+                    {/* Player Stats Tab - Enhanced */}
                     {activeTab === 'stats' && (
                       <motion.div key="stats" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
-                        <h2 className="text-2xl font-bold mb-6 text-[#D4AF37]">Player Statistics</h2>
-                        <div className="overflow-x-auto">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-[#2a2a2a]">
-                                <th className="text-left py-3">Player</th>
-                                <th className="text-left py-3">Matches</th>
-                                <th className="text-left py-3">Runs</th>
-                                <th className="text-left py-3">Highest</th>
-                                <th className="text-left py-3">Average</th>
-                                <th className="text-left py-3">Wickets</th>
-                                <th className="text-left py-3">Economy</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {stats.map((stat) => (
-                                <tr key={stat.playerId} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
-                                  <td className="py-3 font-medium">{stat.name}</td>
-                                  <td className="py-3">{stat.matches}</td>
-                                  <td className="py-3">{stat.runs}</td>
-                                  <td className="py-3">{stat.highest}</td>
-                                  <td className="py-3">{stat.average}</td>
-                                  <td className="py-3">{stat.wickets}</td>
-                                  <td className="py-3">{stat.economy}</td>
+                        <div className="flex justify-between items-center mb-6">
+                          <h2 className="text-2xl font-bold text-[#D4AF37]">Player Statistics</h2>
+                          {loadingStats && (
+                            <div className="flex items-center text-sm text-[#D4AF37]">
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Loading stats...
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Stats Summary Cards */}
+                        {stats.length > 0 && !loadingStats && (
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <div className="bg-[#0A0A0A] p-4 rounded-lg text-center border border-[#2a2a2a]">
+                              <div className="text-2xl font-bold text-[#D4AF37]">{stats.reduce((sum, p) => sum + p.runs, 0)}</div>
+                              <div className="text-gray-400">Total Runs</div>
+                            </div>
+                            <div className="bg-[#0A0A0A] p-4 rounded-lg text-center border border-[#2a2a2a]">
+                              <div className="text-2xl font-bold text-[#D4AF37]">{stats.reduce((sum, p) => sum + p.wickets, 0)}</div>
+                              <div className="text-gray-400">Total Wickets</div>
+                            </div>
+                            <div className="bg-[#0A0A0A] p-4 rounded-lg text-center border border-[#2a2a2a]">
+                              <div className="text-2xl font-bold text-[#D4AF37]">{stats.reduce((sum, p) => sum + p.matches, 0)}</div>
+                              <div className="text-gray-400">Total Matches</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mobile Stats Cards */}
+                        <div className="sm:hidden space-y-4 mb-6">
+                          {loadingStats ? (
+                            <div className="text-center py-8 text-gray-400">
+                              Loading player statistics...
+                            </div>
+                          ) : stats.length === 0 ? (
+                            <div className="text-center py-8">
+                              <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                              <h3 className="text-xl font-bold text-gray-400">No statistics available</h3>
+                              <p className="text-gray-500 mt-2">Player statistics will appear here once matches are played</p>
+                            </div>
+                          ) : (
+                            stats.map((stat) => (
+                              <div key={stat.playerId} className="bg-[#0A0A0A] p-4 rounded-lg border border-[#2a2a2a]">
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                      {stat.image ? (
+                                        <Image src={stat.image} alt={stat.name} width={40} height={40} className="rounded-full" />
+                                      ) : (
+                                        <span className="text-sm font-bold">{stat.name.charAt(0)}</span>
+                                      )}
+                                    </div>
+                                    <h3 className="font-bold text-[#D4AF37]">{stat.name}</h3>
+                                  </div>
+                                  <span className="text-sm text-gray-400">{stat.matches} matches</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                  <div>
+                                    <span className="text-gray-400 block">Runs</span>
+                                    <span className="font-medium text-[#D4AF37]">{stat.runs}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400 block">Wickets</span>
+                                    <span className="font-medium text-[#D4AF37]">{stat.wickets}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400 block">Average</span>
+                                    <span className="font-medium">{stat.average.toFixed(1)}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-400 block">Economy</span>
+                                    <span className="font-medium">{stat.economy.toFixed(1)}</span>
+                                  </div>
+                                  <div className="col-span-2">
+                                    <span className="text-gray-400 block">Best Batting</span>
+                                    <span className="font-medium">{formatBestBatting(stat.highest)}</span>
+                                  </div>
+                                  <div className="col-span-2">
+                                    <span className="text-gray-400 block">Best Bowling</span>
+                                    <span className="font-medium">{formatBestBowling(stat.bestBowling)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Desktop Table */}
+                        <div className="hidden sm:block overflow-x-scroll mb-8">
+                          {loadingStats ? (
+                            <div className="text-center py-8 text-gray-400">
+                              Loading player statistics...
+                            </div>
+                          ) : stats.length === 0 ? (
+                            <div className="text-center py-8">
+                              <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                              <h3 className="text-xl font-bold text-gray-400">No statistics available</h3>
+                              <p className="text-gray-500 mt-2">Player statistics will appear here once matches are played</p>
+                            </div>
+                          ) : (
+                            <table className=" w-[1000px]">
+                              <thead>
+                                <tr className="border-b border-[#2a2a2a]">
+                                  <th className="text-left py-3">Player</th>
+                                  <th className="text-left py-3">Category</th>
+                                  <th className="text-left py-3">Matches</th>
+                                  <th className="text-left py-3">Runs</th>
+                                  <th className="text-left py-3">Average</th>
+                                  <th className="text-left py-3">Highest</th>
+                                  <th className="text-left py-3">Wickets</th>
+                                  <th className="text-left py-3">Economy</th>
+                                  <th className="text-left py-3">Best Bowling</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        <div className="mt-8 grid md:grid-cols-2 gap-6">
-                          <div>
-                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Top Batsmen</h3>
-                            <div className="space-y-3">
-                              {stats
-                                .sort((a, b) => b.runs - a.runs)
-                                .slice(0, 3)
-                                .map((stat, index) => (
-                                  <div key={stat.playerId} className="bg-[#0A0A0A] p-3 rounded-lg flex justify-between items-center">
-                                    <div className="flex items-center space-x-3">
-                                      <span className="text-[#D4AF37] font-bold">#{index + 1}</span>
-                                      <span>{stat.name}</span>
-                                    </div>
-                                    <span className="font-bold">{stat.runs} runs</span>
-                                  </div>
+                              </thead>
+                              <tbody>
+                                {stats.map((stat) => (
+                                  <tr key={stat.playerId} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
+                                    <td className="py-3">
+                                      <div className="flex items-center space-x-3">
+                                        <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
+                                          {stat.image ? (
+                                            <Image src={stat.image} alt={stat.name} width={32} height={32} className="rounded-full" />
+                                          ) : (
+                                            <span className="text-xs font-bold">{stat.name.charAt(0)}</span>
+                                          )}
+                                        </div>
+                                        <span className="font-medium">{stat.name}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3 capitalize">{stat.category}</td>
+                                    <td className="py-3">{stat.matches}</td>
+                                    <td className="py-3 font-medium text-[#D4AF37]">{stat.runs}</td>
+                                    <td className="py-3">{stat.average.toFixed(1)}</td>
+                                    <td className="py-3">{formatBestBatting(stat.highest)}</td>
+                                    <td className="py-3 font-medium text-[#D4AF37]">{stat.wickets}</td>
+                                    <td className="py-3">{stat.economy.toFixed(1)}</td>
+                                    <td className="py-3">{formatBestBowling(stat.bestBowling)}</td>
+                                  </tr>
                                 ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+
+                        {/* Top Performers Section */}
+                        {!loadingStats && stats.length > 0 && (
+                          <div className="mt-8">
+                            <h3 className="text-xl font-bold mb-6 text-[#D4AF37] text-center">Top Performers</h3>
+                            <div className="grid md:grid-cols-2 gap-6">
+                              {/* Top Batsmen */}
+                              <div>
+                                <h4 className="text-lg font-bold mb-4 text-[#D4AF37]">🏏 Top Batsmen (Most Runs)</h4>
+                                <div className="space-y-3">
+                                  {[...stats]
+                                    .sort((a, b) => b.runs - a.runs)
+                                    .slice(0, 5)
+                                    .map((stat, index) => (
+                                      <motion.div
+                                        key={stat.playerId}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="bg-[#0A0A0A] p-4 rounded-lg flex justify-between items-center border border-[#2a2a2a]"
+                                      >
+                                        <div className="flex items-center space-x-3">
+                                          <span className={`text-2xl font-bold ${index === 0 ? 'text-[#D4AF37]' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
+                                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                          </span>
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
+                                              {stat.image ? (
+                                                <Image src={stat.image} alt={stat.name} width={32} height={32} className="rounded-full" />
+                                              ) : (
+                                                <span className="text-xs font-bold">{stat.name.charAt(0)}</span>
+                                              )}
+                                            </div>
+                                            <span className="font-medium">{stat.name}</span>
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span className="font-bold block text-lg">{stat.runs} runs</span>
+                                          <span className="text-sm text-gray-400">Avg: {stat.average.toFixed(1)}</span>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                </div>
+                              </div>
+
+                              {/* Top Bowlers */}
+                              <div>
+                                <h4 className="text-lg font-bold mb-4 text-[#D4AF37]">🎯 Top Bowlers (Most Wickets)</h4>
+                                <div className="space-y-3">
+                                  {[...stats]
+                                    .sort((a, b) => b.wickets - a.wickets)
+                                    .slice(0, 5)
+                                    .map((stat, index) => (
+                                      <motion.div
+                                        key={stat.playerId}
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="bg-[#0A0A0A] p-4 rounded-lg flex justify-between items-center border border-[#2a2a2a]"
+                                      >
+                                        <div className="flex items-center space-x-3">
+                                          <span className={`text-2xl font-bold ${index === 0 ? 'text-[#D4AF37]' : index === 1 ? 'text-gray-400' : index === 2 ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
+                                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                                          </span>
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
+                                              {stat.image ? (
+                                                <Image src={stat.image} alt={stat.name} width={32} height={32} className="rounded-full" />
+                                              ) : (
+                                                <span className="text-xs font-bold">{stat.name.charAt(0)}</span>
+                                              )}
+                                            </div>
+                                            <span className="font-medium">{stat.name}</span>
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span className="font-bold block text-lg">{stat.wickets} wickets</span>
+                                          <span className="text-sm text-gray-400">Econ: {stat.economy.toFixed(1)}</span>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Milestones Section */}
+                            <div className="mt-8 bg-[#0A0A0A] p-6 rounded-lg border border-[#2a2a2a]">
+                              <h4 className="text-lg font-bold mb-4 text-[#D4AF37]">🏆 Team Milestones</h4>
+                              <div className="grid md:grid-cols-3 gap-4 text-center">
+                                <div>
+                                  <div className="text-2xl font-bold text-[#D4AF37]">{stats.filter(p => p.centuries > 0).length}</div>
+                                  <div className="text-sm text-gray-400">Centuries</div>
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-[#D4AF37]">{stats.filter(p => p.halfCenturies > 0).length}</div>
+                                  <div className="text-sm text-gray-400">Half Centuries</div>
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-[#D4AF37]">{stats.filter(p => p.fiveWickets > 0).length}</div>
+                                  <div className="text-sm text-gray-400">5-Wicket Hauls</div>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div>
-                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Top Bowlers</h3>
-                            <div className="space-y-3">
-                              {stats
-                                .sort((a, b) => b.wickets - a.wickets)
-                                .slice(0, 3)
-                                .map((stat, index) => (
-                                  <div key={stat.playerId} className="bg-[#0A0A0A] p-3 rounded-lg flex justify-between items-center">
-                                    <div className="flex items-center space-x-3">
-                                      <span className="text-[#D4AF37] font-bold">#{index + 1}</span>
-                                      <span>{stat.name}</span>
-                                    </div>
-                                    <span className="font-bold">{stat.wickets} wickets</span>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        </div>
+                        )}
                       </motion.div>
                     )}
 
@@ -1001,7 +1434,7 @@ const AdminDashboard = () => {
                     {activeTab === 'gallery' && (
                       <motion.div key="gallery" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-2xl font-bold text-[#D4AF37]">Gallery Management</h2>
+                          <h2 className="text-2xl font-bold text-[#D4AF37]">Gallery</h2>
                           <motion.button
                             onClick={() => setShowUploadModal(true)}
                             className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg flex items-center gap-2"
@@ -1011,7 +1444,7 @@ const AdminDashboard = () => {
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
-                            Upload Photos
+                            Upload
                           </motion.button>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -1207,7 +1640,7 @@ const AdminDashboard = () => {
               )}
             </AnimatePresence>
 
-            {/* Delete Confirmation Modal */}
+            {/* Delete Image Confirmation Modal */}
             <AnimatePresence>
               {imageToDelete && (
                 <motion.div
@@ -1265,6 +1698,7 @@ const AdminDashboard = () => {
               editing={editingMatch}
               initialData={editingMatch}
             />
+            
             {/* Delete Match Confirmation Modal */}
             <AnimatePresence>
               {matchToDelete && (
@@ -1311,4 +1745,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-
