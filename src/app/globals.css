@@ -26,4 +26,29 @@ body {
   color: white;
 }
 
+/* Custom black scrollbar */
+.scrollbar-black::-webkit-scrollbar {
+  height: 8px;
+  background-color: #000000;
+}
 
+.scrollbar-black::-webkit-scrollbar-track {
+  background-color: #000000;
+  border-radius: 4px;
+}
+
+.scrollbar-black::-webkit-scrollbar-thumb {
+  background-color: #1a1a1a;
+  border-radius: 4px;
+  border: 1px solid #2a2a2a;
+}
+
+.scrollbar-black::-webkit-scrollbar-thumb:hover {
+  background-color: #2a2a2a;
+}
+
+/* Firefox support */
+.scrollbar-black {
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #000000;
+}

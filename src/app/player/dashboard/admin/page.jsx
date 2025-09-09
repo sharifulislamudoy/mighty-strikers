@@ -91,7 +91,7 @@ const AdminDashboard = () => {
   // Fetch player stats from playerDetails collection
   const fetchPlayerStats = async () => {
     if (players.length === 0) return;
-    
+
     setLoadingStats(true);
     try {
       const statsPromises = players.map(async (player) => {
@@ -257,10 +257,10 @@ const AdminDashboard = () => {
           const playersData = await response.json();
           const approvedPlayers = playersData.filter((player) => player.status === 'approved');
           const pendingPlayersData = playersData.filter((player) => player.status === 'pending');
-          
+
           setPlayers(approvedPlayers);
           setPendingPlayers(pendingPlayersData);
-          
+
           // Fetch stats after players are loaded
           if (approvedPlayers.length > 0) {
             fetchPlayerStats();
@@ -416,7 +416,7 @@ const AdminDashboard = () => {
         setPendingPlayers(pendingPlayers.filter((p) => p._id !== playerId));
         const newApprovedPlayer = { ...player, status: 'approved' };
         setPlayers([...players, newApprovedPlayer]);
-        
+
         // Fetch stats for the newly approved player
         if (newApprovedPlayer.username) {
           try {
@@ -449,7 +449,7 @@ const AdminDashboard = () => {
             console.error('Error fetching stats for approved player:', error);
           }
         }
-        
+
         toast.success(`${player.name} approved successfully!`);
       } else {
         toast.error('Failed to approve player');
@@ -808,7 +808,7 @@ const AdminDashboard = () => {
                                   <span className="text-gray-400 text-sm">Season Stats</span>
                                 </div>
                                 <p className="text-gray-400 text-sm">
-                                  {stats.length > 0 
+                                  {stats.length > 0
                                     ? `${stats.reduce((max, p) => p.runs > max.runs ? p : max, stats[0]).name}: ${stats.reduce((max, p) => p.runs > max ? p.runs : max, 0)} runs`
                                     : 'No data available'
                                   }
@@ -820,7 +820,7 @@ const AdminDashboard = () => {
                                   <span className="text-gray-400 text-sm">Season Stats</span>
                                 </div>
                                 <p className="text-gray-400 text-sm">
-                                  {stats.length > 0 
+                                  {stats.length > 0
                                     ? `${stats.reduce((max, p) => p.wickets > max.wickets ? p : max, stats[0]).name}: ${stats.reduce((max, p) => p.wickets > max ? p.wickets : max, 0)} wickets`
                                     : 'No data available'
                                   }
@@ -979,7 +979,7 @@ const AdminDashboard = () => {
                             );
                           })}
                         </div>
-                        
+
                         {/* Player Delete and Reject Modals */}
                         {playerToDelete && (
                           <motion.div
@@ -1265,7 +1265,7 @@ const AdminDashboard = () => {
                         </div>
 
                         {/* Desktop Table */}
-                        <div className="hidden sm:block overflow-x-scroll mb-8">
+                        <div className="hidden sm:block overflow-x-auto mb-8">
                           {loadingStats ? (
                             <div className="text-center py-8 text-gray-400">
                               Loading player statistics...
@@ -1279,47 +1279,49 @@ const AdminDashboard = () => {
                               <p className="text-gray-500 mt-2">Player statistics will appear here once matches are played</p>
                             </div>
                           ) : (
-                            <table className=" w-[1000px]">
-                              <thead>
-                                <tr className="border-b border-[#2a2a2a]">
-                                  <th className="text-left py-3">Player</th>
-                                  <th className="text-left py-3">Category</th>
-                                  <th className="text-left py-3">Matches</th>
-                                  <th className="text-left py-3">Runs</th>
-                                  <th className="text-left py-3">Average</th>
-                                  <th className="text-left py-3">Highest</th>
-                                  <th className="text-left py-3">Wickets</th>
-                                  <th className="text-left py-3">Economy</th>
-                                  <th className="text-left py-3">Best Bowling</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {stats.map((stat) => (
-                                  <tr key={stat.playerId} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
-                                    <td className="py-3">
-                                      <div className="flex items-center space-x-3">
-                                        <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
-                                          {stat.image ? (
-                                            <Image src={stat.image} alt={stat.name} width={32} height={32} className="rounded-full" />
-                                          ) : (
-                                            <span className="text-xs font-bold">{stat.name.charAt(0)}</span>
-                                          )}
-                                        </div>
-                                        <span className="font-medium">{stat.name}</span>
-                                      </div>
-                                    </td>
-                                    <td className="py-3 capitalize">{stat.category}</td>
-                                    <td className="py-3">{stat.matches}</td>
-                                    <td className="py-3 font-medium text-[#D4AF37]">{stat.runs}</td>
-                                    <td className="py-3">{stat.average.toFixed(1)}</td>
-                                    <td className="py-3">{formatBestBatting(stat.highest)}</td>
-                                    <td className="py-3 font-medium text-[#D4AF37]">{stat.wickets}</td>
-                                    <td className="py-3">{stat.economy.toFixed(1)}</td>
-                                    <td className="py-3">{formatBestBowling(stat.bestBowling)}</td>
+                            <div className="overflow-x-auto scrollbar-black">
+                              <table className="w-[1000px]">
+                                <thead>
+                                  <tr className="border-b border-[#2a2a2a]">
+                                    <th className="text-left py-3">Player</th>
+                                    <th className="text-left py-3">Category</th>
+                                    <th className="text-left py-3">Matches</th>
+                                    <th className="text-left py-3">Runs</th>
+                                    <th className="text-left py-3">Average</th>
+                                    <th className="text-left py-3">Highest</th>
+                                    <th className="text-left py-3">Wickets</th>
+                                    <th className="text-left py-3">Economy</th>
+                                    <th className="text-left py-3">Best Bowling</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                                </thead>
+                                <tbody>
+                                  {stats.map((stat) => (
+                                    <tr key={stat.playerId} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
+                                      <td className="py-3">
+                                        <div className="flex items-center space-x-3">
+                                          <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center overflow-hidden">
+                                            {stat.image ? (
+                                              <Image src={stat.image} alt={stat.name} width={32} height={32} className="rounded-full" />
+                                            ) : (
+                                              <span className="text-xs font-bold">{stat.name.charAt(0)}</span>
+                                            )}
+                                          </div>
+                                          <span className="font-medium">{stat.name}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-3 capitalize">{stat.category}</td>
+                                      <td className="py-3">{stat.matches}</td>
+                                      <td className="py-3 font-medium text-[#D4AF37]">{stat.runs}</td>
+                                      <td className="py-3">{stat.average.toFixed(1)}</td>
+                                      <td className="py-3">{formatBestBatting(stat.highest)}</td>
+                                      <td className="py-3 font-medium text-[#D4AF37]">{stat.wickets}</td>
+                                      <td className="py-3">{stat.economy.toFixed(1)}</td>
+                                      <td className="py-3">{formatBestBowling(stat.bestBowling)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           )}
                         </div>
 
@@ -1698,7 +1700,7 @@ const AdminDashboard = () => {
               editing={editingMatch}
               initialData={editingMatch}
             />
-            
+
             {/* Delete Match Confirmation Modal */}
             <AnimatePresence>
               {matchToDelete && (
