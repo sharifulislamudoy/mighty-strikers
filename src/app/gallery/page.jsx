@@ -58,7 +58,12 @@ const GalleryPage = () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    setGalleryImages(data.images || []);
+                    // Ensure each image has aspect property (you may need to compute this in backend or here)
+                    const imagesWithAspect = (data.images || []).map(img => ({
+                        ...img,
+                        aspect: img.aspect || 'square' // Default to square if not set
+                    }));
+                    setGalleryImages(imagesWithAspect);
                 } else {
                     console.error('Failed to fetch gallery images:', data.message);
                     toast.error('Failed to load gallery images');
@@ -195,7 +200,12 @@ const GalleryPage = () => {
             const response = await fetch('/api/gallery');
             const data = await response.json();
             if (response.ok) {
-                setGalleryImages(data.images || []);
+                // Ensure aspect for new images too
+                const imagesWithAspect = (data.images || []).map(img => ({
+                    ...img,
+                    aspect: img.aspect || 'square'
+                }));
+                setGalleryImages(imagesWithAspect);
             }
         } catch (error) {
             console.error('Upload error:', error);
@@ -279,16 +289,28 @@ const GalleryPage = () => {
         }
     };
 
-    // Get column class based on aspect ratio
-    const getColumnClass = (aspect) => {
+    // Updated getColumnClass to handle spans and aspect ratios properly
+    // Now it returns classes for both span and aspect
+    const getGridClasses = (aspect) => {
+        let spanClass = '';
+        let aspectClass = 'aspect-square'; // default
+
         switch (aspect) {
             case 'portrait':
-                return 'md:row-span-2';
+                spanClass = 'row-span-2'; // 2 rows for portrait
+                aspectClass = 'aspect-[2/3]'; // width:height 2:3 for tall images
+                break;
             case 'landscape':
-                return 'md:col-span-2';
+                spanClass = 'col-span-2'; // 2 columns for landscape
+                aspectClass = 'aspect-[3/2]'; // width:height 3:2 for wide images
+                break;
             default:
-                return '';
+                spanClass = ''; // square, 1x1
+                aspectClass = 'aspect-square';
+                break;
         }
+
+        return `${spanClass} ${aspectClass}`;
     };
 
     return (
@@ -518,84 +540,88 @@ const GalleryPage = () => {
                                 </div>
                             ) : (
                                 <>
+                                    {/* Updated Grid: Removed auto-rows, now simple cols with spans */}
                                     <motion.div
                                         variants={containerVariants}
                                         initial="hidden"
                                         animate="visible"
-                                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-[minmax(200px,auto)]"
+                                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                                     >
                                         <AnimatePresence mode="popLayout">
-                                            {filteredImages.map((image) => (
-                                                <motion.div
-                                                    key={image._id || image.id}
-                                                    layout
-                                                    variants={itemVariants}
-                                                    className={`relative group cursor-pointer overflow-hidden rounded-xl ${getColumnClass(image.aspect || 'square')}`}
-                                                    whileHover={{ scale: 1.02 }}
-                                                    onClick={() => setSelectedImage(image)}
-                                                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                                                >
-                                                    {/* Skeleton loader */}
-                                                    {!loadedImages[image._id || image.id] && (
-                                                        <div className="absolute inset-0 bg-[#2a2a2a] animate-pulse z-10" />
-                                                    )}
-
-                                                    <Image
-                                                        src={image.image || '/default-gallery.jpg'}
-                                                        alt={image.title || 'Gallery image'}
-                                                        fill
-                                                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                                        onLoad={() => handleImageLoad(image._id || image.id)}
-                                                    />
-
-                                                    {/* Like button - Always visible */}
-                                                    <div className="absolute top-3 right-3 z-20">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleLike(image._id);
-                                                            }}
-                                                            disabled={likedImages[image._id]}
-                                                            className={`flex items-center justify-center w-11 h-11 rounded-full backdrop-blur-sm ${likedImages[image._id]
-                                                                ? 'bg-red-500/20 text-red-500'
-                                                                : 'bg-black/40 text-gray-300 hover:bg-black/60 hover:text-yellow-500'
-                                                                } transition-all duration-300`}
-                                                        >
-                                                            <svg
-                                                                className="w-4 h-4"
-                                                                fill={likedImages[image._id] ? "currentColor" : "none"}
-                                                                stroke="currentColor"
-                                                                viewBox="0 0 24 24"
-                                                                strokeWidth={2}
-                                                            >
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Like count - Always visible */}
-                                                    <div className="absolute top-3 left-3 z-20">
-                                                        <div className="flex items-center gap-1 bg-black/60 text-yellow px-2 py-1 rounded-full text-xs backdrop-blur-sm">
-                                                            <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                            </svg>
-                                                            <span>{image.likes || 0}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Overlay with info - Still appears on hover */}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                                                        <h3 className="font-bold text-white text-sm md:text-base">{image.title || 'Profile Photo'}</h3>
-                                                        <p className="text-gray-300 text-xs md:text-sm truncate">{image.description || ''}</p>
-                                                        <p className="text-[#D4AF37] text-xs mt-1">
-                                                            {image.date || new Date(image.createdAt).toLocaleDateString()}
-                                                        </p>
-                                                        {image.name && (
-                                                            <p className="text-gray-400 text-xs mt-1">By: {image.name}</p>
+                                            {filteredImages.map((image) => {
+                                                const gridClasses = getGridClasses(image.aspect || 'square');
+                                                return (
+                                                    <motion.div
+                                                        key={image._id || image.id}
+                                                        layout
+                                                        variants={itemVariants}
+                                                        className={`relative group cursor-pointer overflow-hidden rounded-xl ${gridClasses}`}
+                                                        whileHover={{ scale: 1.02 }}
+                                                        onClick={() => setSelectedImage(image)}
+                                                        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                                    >
+                                                        {/* Skeleton loader */}
+                                                        {!loadedImages[image._id || image.id] && (
+                                                            <div className="absolute inset-0 bg-[#2a2a2a] animate-pulse z-10" />
                                                         )}
-                                                    </div>
-                                                </motion.div>
-                                            ))}
+
+                                                        <Image
+                                                            src={image.image || '/default-gallery.jpg'}
+                                                            alt={image.title || 'Gallery image'}
+                                                            fill
+                                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                                            onLoad={() => handleImageLoad(image._id || image.id)}
+                                                        />
+
+                                                        {/* Like button - Always visible */}
+                                                        <div className="absolute top-3 right-3 z-20">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleLike(image._id);
+                                                                }}
+                                                                disabled={likedImages[image._id]}
+                                                                className={`flex items-center justify-center w-11 h-11 rounded-full backdrop-blur-sm ${likedImages[image._id]
+                                                                    ? 'bg-red-500/20 text-red-500'
+                                                                    : 'bg-black/40 text-gray-300 hover:bg-black/60 hover:text-yellow-500'
+                                                                    } transition-all duration-300`}
+                                                            >
+                                                                <svg
+                                                                    className="w-4 h-4"
+                                                                    fill={likedImages[image._id] ? "currentColor" : "none"}
+                                                                    stroke="currentColor"
+                                                                    viewBox="0 0 24 24"
+                                                                    strokeWidth={2}
+                                                                >
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Like count - Always visible */}
+                                                        <div className="absolute top-3 left-3 z-20">
+                                                            <div className="flex items-center gap-1 bg-black/60 text-yellow px-2 py-1 rounded-full text-xs backdrop-blur-sm">
+                                                                <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                                </svg>
+                                                                <span>{image.likes || 0}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Overlay with info - Still appears on hover */}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                                                            <h3 className="font-bold text-white text-sm md:text-base">{image.title || 'Profile Photo'}</h3>
+                                                            <p className="text-gray-300 text-xs md:text-sm truncate">{image.description || ''}</p>
+                                                            <p className="text-[#D4AF37] text-xs mt-1">
+                                                                {image.date || new Date(image.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                            {image.name && (
+                                                                <p className="text-gray-400 text-xs mt-1">By: {image.name}</p>
+                                                            )}
+                                                        </div>
+                                                    </motion.div>
+                                                );
+                                            })}
                                         </AnimatePresence>
                                     </motion.div>
 
@@ -620,7 +646,7 @@ const GalleryPage = () => {
                 </div>
             </div>
 
-            {/* Image Detail Modal */}
+            {/* Image Detail Modal - unchanged */}
             <AnimatePresence>
                 {selectedImage && (
                     <>
@@ -694,7 +720,7 @@ const GalleryPage = () => {
                 )}
             </AnimatePresence>
 
-            {/* Upload Modal */}
+            {/* Upload Modal - unchanged */}
             <AnimatePresence>
                 {showUploadModal && (
                     <>

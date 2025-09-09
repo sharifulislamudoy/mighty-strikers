@@ -12,6 +12,14 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadData, setUploadData] = useState({
+    category: 'profile',
+    title: '',
+    images: [],
+    previews: []
+  });
+  const [isUploading, setIsUploading] = useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
 
@@ -47,8 +55,8 @@ const Navbar = () => {
   };
 
   const handleLogoutClick = () => {
-    setIsOpen(false); // Close mobile menu
-    setUserMenuOpen(false); // Close user menu
+    setIsOpen(false);
+    setUserMenuOpen(false);
     setShowLogoutConfirm(true);
   };
 
@@ -61,10 +69,88 @@ const Navbar = () => {
     setShowLogoutConfirm(false);
   };
 
-  // Get username from session for dynamic route
+  // Handle image selection for upload
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    const newPreviews = [];
+    const newImages = [];
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newPreviews.push(e.target.result);
+        if (newPreviews.length === files.length) {
+          setUploadData(prev => ({
+            ...prev,
+            previews: [...prev.previews, ...newPreviews],
+            images: [...prev.images, ...newImages]
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+      newImages.push(file);
+    });
+  };
+
+  // Remove selected image from upload
+  const removeImage = (index) => {
+    setUploadData(prev => ({
+      ...prev,
+      previews: prev.previews.filter((_, i) => i !== index),
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Handle upload to Cloudinary and then to backend
+  const handleUpload = async () => {
+    if (uploadData.images.length === 0) {
+      alert('Please select at least one image');
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const uploadPromises = uploadData.images.map(async (image) => {
+        const formData = new FormData();
+        formData.append('file', image);
+        formData.append('username', session.user.username);
+        formData.append('name', session.user.name);
+        formData.append('category', uploadData.category);
+        formData.append('title', uploadData.title || '');
+
+        const response = await fetch('/api/gallery/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        return response.json();
+      });
+
+      await Promise.all(uploadPromises);
+      alert('Images uploaded successfully!');
+      setShowUploadModal(false);
+      setUploadData({
+        category: 'profile',
+        title: '',
+        images: [],
+        previews: []
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload images. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const username = session?.user?.username || session?.user?.name?.toLowerCase().replace(/\s+/g, '-');
-  
-  // Check if user is admin
   const isAdmin = session?.user?.role === 'admin';
 
   return (
@@ -151,6 +237,20 @@ const Navbar = () => {
                           {session.user?.role}
                         </p>
                       </div>
+                      
+                      {/* Upload Button */}
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          setShowUploadModal(true);
+                        }}
+                        className=" w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Upload Image
+                      </button>
                       
                       {/* Admin Dashboard Link */}
                       {isAdmin && (
@@ -261,12 +361,32 @@ const Navbar = () => {
                   {/* Mobile User Menu or Join Button */}
                   {status === 'authenticated' ? (
                     <>
+                      {/* Upload Button for Mobile */}
+                      <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                      >
+                        <button
+                          onClick={() => {
+                            setIsOpen(false);
+                            setShowUploadModal(true);
+                          }}
+                          className=" w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                          Upload Image
+                        </button>
+                      </motion.div>
+                      
                       {/* Admin Dashboard Link for Mobile */}
                       {isAdmin && (
                         <motion.div
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
+                          transition={{ duration: 0.3, delay: (navItems.length + 1) * 0.1 }}
                         >
                           <Link
                             href="/player/dashboard/admin"
@@ -281,7 +401,7 @@ const Navbar = () => {
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 1 : 0)) * 0.1 }}
+                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 2 : 1)) * 0.1 }}
                       >
                         <Link
                           href={`/player/dashboard/${username}`}
@@ -294,7 +414,7 @@ const Navbar = () => {
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 2 : 1)) * 0.1 }}
+                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 3 : 2)) * 0.1 }}
                       >
                         <button
                           onClick={handleLogoutClick}
@@ -370,6 +490,152 @@ const Navbar = () => {
                   >
                     Sign Out
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Upload Modal */}
+      <AnimatePresence>
+        {showUploadModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+              onClick={() => !isUploading && setShowUploadModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] w-full max-w-2xl max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6 overflow-y-auto">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-[#D4AF37]">Upload Photos</h2>
+                    <button
+                      onClick={() => !isUploading && setShowUploadModal(false)}
+                      className="text-gray-400 hover:text-white"
+                      disabled={isUploading}
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Category Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Category
+                      </label>
+                      <select
+                        value={uploadData.category}
+                        onChange={(e) => setUploadData({ ...uploadData, category: e.target.value })}
+                        className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                        disabled={isUploading}
+                      >
+                        <option value="profile">Profile Photos</option>
+                        <option value="matches">Match Moments</option>
+                        <option value="winning">Winning Moments</option>
+                        <option value="team">Team Photos</option>
+                      </select>
+                    </div>
+
+                    {/* Title Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Title (for all images)
+                      </label>
+                      <input
+                        type="text"
+                        value={uploadData.title}
+                        onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
+                        placeholder="Enter a title for your images"
+                        className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                        disabled={isUploading}
+                      />
+                    </div>
+
+                    {/* Image Upload */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Select Images
+                      </label>
+                      <div className="flex items-center justify-center w-full">
+                        <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer ${isUploading ? 'border-gray-600 cursor-not-allowed' : 'border-gray-600 hover:border-[#D4AF37]'} bg-[#2a2a2a]`}>
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg className="w-8 h-8 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p className="mb-2 text-sm text-gray-400">Click to upload or drag and drop</p>
+                            <p className="text-xs text-gray-500">PNG, JPG, JPEG (MAX. 10MB each)</p>
+                          </div>
+                          <input
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={handleImageSelect}
+                            accept="image/*"
+                            disabled={isUploading}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Image Previews */}
+                    {uploadData.previews.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-300 mb-3">Selected Images ({uploadData.previews.length})</h3>
+                        <div className="grid grid-cols-3 gap-3">
+                          {uploadData.previews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={preview}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-24 object-cover rounded-lg"
+                              />
+                              {!isUploading && (
+                                <button
+                                  onClick={() => removeImage(index)}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upload Button */}
+                    <button
+                      onClick={handleUpload}
+                      disabled={isUploading || uploadData.images.length === 0}
+                      className={`w-full py-3 px-4 rounded-lg font-semibold ${isUploading || uploadData.images.length === 0 ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#D4AF37] hover:bg-[#c59a2f] text-black'}`}
+                    >
+                      {isUploading ? (
+                        <div className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </div>
+                      ) : (
+                        `Upload ${uploadData.images.length} Image${uploadData.images.length !== 1 ? 's' : ''}`
+                      )}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
