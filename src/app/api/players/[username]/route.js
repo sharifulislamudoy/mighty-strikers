@@ -1,20 +1,31 @@
-// app/api/players/[username]/route.js
+'use server';
+
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';  // এটা add করুন যদি না থাকে
 
 export async function GET(request, { params }) {
     try {
-        const { username } = params;
+        const { username } = params;  // এখন এটা slug হিসেবে কাজ করবে (ID বা username)
         const { db } = await connectToDatabase();
         const playersCollection = db.collection('players');
 
-        const player = await playersCollection.findOne({ username });
+        let player;
+
+        // প্রথমে চেক করুন যে username আসলে ObjectId কিনা
+        try {
+            const objectId = new ObjectId(username);
+            player = await playersCollection.findOne({ _id: objectId });
+        } catch (idError) {
+            // যদি valid ObjectId না হয়, তাহলে username হিসেবে খুঁজুন (আগের logic)
+            player = await playersCollection.findOne({ username });
+        }
 
         if (!player) {
             return NextResponse.json({ error: 'Player not found' }, { status: 404 });
         }
 
-        // Convert ObjectId to string
+        // Convert ObjectId to string (আগের মতো)
         const playerData = {
             ...player,
             _id: player._id.toString(),
@@ -29,6 +40,7 @@ export async function GET(request, { params }) {
 }
 
 export async function POST(request, { params }) {
+    // এটা unchanged—আগের মতো username দিয়ে like update
     try {
         const { username } = params;
         const { liked } = await request.json();

@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import NewMatchModal from '@/Components/NewMatchModal';
 
+
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -341,7 +342,6 @@ const AdminDashboard = () => {
     // Convert selectedPlayers usernames to _id for the modal
     if (match.selectedPlayers && match.selectedPlayers.length > 0) {
       try {
-        const { db } = await connectToDatabase(); // Wait, no - this is frontend. Use API to get players by username
         // Instead, fetch players first, then find IDs
         const response = await fetch('/api/players');
         if (response.ok) {
