@@ -14,10 +14,12 @@ export async function POST(request) {
       updatedAt: new Date()
     });
 
-    return NextResponse.json({
+    const newMatch = {
       _id: result.insertedId,
       ...matchData
-    }, { status: 201 });
+    };
+
+    return NextResponse.json(newMatch, { status: 201 });
   } catch (error) {
     return NextResponse.json(
       { message: 'Failed to create match', error: error.message },
@@ -31,7 +33,14 @@ export async function GET() {
     const { db } = await connectToDatabase();
     const matches = await db.collection('matches').find({}).toArray();
     
-    return NextResponse.json(matches, { status: 200 });
+    // Convert ObjectId to string for frontend
+    const formattedMatches = matches.map(match => ({
+      ...match,
+      _id: match._id.toString(),
+      selectedPlayersData: match.selectedPlayersData || []
+    }));
+    
+    return NextResponse.json(formattedMatches, { status: 200 });
   } catch (error) {
     return NextResponse.json(
       { message: 'Failed to fetch matches', error: error.message },
@@ -40,15 +49,67 @@ export async function GET() {
   }
 }
 
-// Add other methods as needed
-export async function PUT() {
-  return NextResponse.json({ message: 'Method not implemented' }, { status: 405 });
+export async function DELETE(request) {
+  try {
+    const { matchId } = await request.json();
+    const { db } = await connectToDatabase();
+
+    const result = await db.collection('matches').deleteOne({
+      _id: new ObjectId(matchId)
+    });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { message: 'Match not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: 'Match deleted successfully' }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { message: 'Failed to delete match', error: error.message },
+      { status: 500 }
+    );
+  }
 }
 
-export async function DELETE() {
-  return NextResponse.json({ message: 'Method not implemented' }, { status: 405 });
-}
+export async function PUT(request) {
+  try {
+    const matchData = await request.json();
+    const { db } = await connectToDatabase();
 
-export async function PATCH() {
-  return NextResponse.json({ message: 'Method not implemented' }, { status: 405 });
+    const { matchId, ...updateData } = matchData;
+
+    const result = await db.collection('matches').updateOne(
+      { _id: new ObjectId(matchId) },
+      { 
+        $set: { 
+          ...updateData,
+          updatedAt: new Date()
+        } 
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { message: 'Match not found' },
+        { status: 404 }
+      );
+    }
+
+    // Return updated match
+    const updatedMatch = await db.collection('matches').findOne({ _id: new ObjectId(matchId) });
+    const formattedMatch = {
+      ...updatedMatch,
+      _id: updatedMatch._id.toString()
+    };
+
+    return NextResponse.json(formattedMatch, { status: 200 });
+  } catch (error) {
+    return NextResponse.json(
+      { message: 'Failed to update match', error: error.message },
+      { status: 500 }
+    );
+  }
 }

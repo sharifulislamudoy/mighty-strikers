@@ -28,6 +28,8 @@ const AdminDashboard = () => {
     previews: [],
   });
   const [showNewMatchModal, setShowNewMatchModal] = useState(false);
+  const [editingMatch, setEditingMatch] = useState(null);
+  const [showEditMatchModal, setShowEditMatchModal] = useState(false);
 
 
   // Animation variants
@@ -308,6 +310,70 @@ const AdminDashboard = () => {
   const handleAddMatch = (newMatch) => {
     setMatches([...matches, { ...newMatch, id: Date.now(), status: 'scheduled' }]);
     toast.success('Match scheduled successfully!');
+  };
+
+  const handleDeleteMatch = async (matchId) => {
+    if (!confirm('Are you sure you want to delete this match?')) return;
+
+    try {
+      const response = await fetch(`/api/matches`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ matchId }),
+      });
+
+      if (response.ok) {
+        setMatches(matches.filter((m) => m._id !== matchId));
+        toast.success('Match deleted successfully!');
+      } else {
+        const data = await response.json();
+        toast.error(data.message || 'Failed to delete match');
+      }
+    } catch (error) {
+      console.error('Error deleting match:', error);
+      toast.error('Error deleting match');
+    }
+  };
+
+  const handleEditMatch = async (match) => {
+    // Convert selectedPlayers usernames to _id for the modal
+    if (match.selectedPlayers && match.selectedPlayers.length > 0) {
+      try {
+        const { db } = await connectToDatabase(); // Wait, no - this is frontend. Use API to get players by username
+        // Instead, fetch players first, then find IDs
+        const response = await fetch('/api/players');
+        if (response.ok) {
+          const allPlayers = await response.json();
+          const approvedPlayers = allPlayers.filter(p => p.status === 'approved');
+
+          // Find player IDs by username
+          const playerIds = match.selectedPlayers
+            .map(username => approvedPlayers.find(p => p.username === username)?._id)
+            .filter(id => id); // Remove nulls
+
+          setEditingMatch({
+            ...match,
+            selectedPlayers: playerIds
+          });
+        }
+      } catch (error) {
+        console.error('Error preparing edit match:', error);
+        toast.error('Failed to load players for edit');
+        return;
+      }
+    } else {
+      setEditingMatch(match);
+    }
+    setShowEditMatchModal(true);
+  };
+
+  const handleUpdateMatch = (updatedMatch) => {
+    setMatches(matches.map((m) => (m._id === updatedMatch._id ? updatedMatch : m)));
+    toast.success('Match updated successfully!');
+    setShowEditMatchModal(false);
+    setEditingMatch(null);
   };
 
   return (
@@ -707,8 +773,6 @@ const AdminDashboard = () => {
                         )}
                       </motion.div>
                     )}
-
-                    {/* Matches Tab */}
                     {activeTab === 'matches' && (
                       <motion.div key="matches" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
@@ -725,19 +789,31 @@ const AdminDashboard = () => {
                             <div key={match._id || match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
                               <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
+                                  {match.opponentLogo && (
+                                    <img src={match.opponentLogo} alt={match.opponent} className="w-8 h-8 rounded-full object-cover" />
+                                  )}
                                   <h3 className="text-xl font-bold">Vs {match.opponent}</h3>
                                 </div>
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs ${match.status === 'scheduled'
-                                    ? 'bg-yellow-500/20 text-yellow-500'
-                                    : match.status === 'completed'
-                                      ? 'bg-green-500/20 text-green-500'
-                                      : 'bg-red-500/20 text-red-500'
-                                    }`}
-                                >
-                                  {match.status}
-                                </span>
+                                <div className="flex flex-col items-end">
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs ${match.status === 'scheduled'
+                                      ? 'bg-yellow-500/20 text-yellow-500'
+                                      : match.status === 'completed'
+                                        ? 'bg-green-500/20 text-green-500'
+                                        : 'bg-red-500/20 text-red-500'
+                                      }`}
+                                  >
+                                    {match.status}
+                                  </span>
+                                  {match.selectedPlayers && match.selectedPlayers.length > 0 && (
+                                    <span className="text-xs text-gray-400 mt-1">
+                                      {match.selectedPlayers.length} players
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+
+                              {/* Match Details */}
                               <div className="space-y-2 mb-4">
                                 <div className="flex">
                                   <div className="w-24 text-gray-400">Date</div>
@@ -760,9 +836,40 @@ const AdminDashboard = () => {
                                   <div>{match.overs}</div>
                                 </div>
                               </div>
+
+                              {/* Selected Players */}
+                              {match.selectedPlayers && match.selectedPlayers.length > 0 && (
+                                <div className="mb-4">
+                                  <h4 className="text-sm font-semibold text-[#D4AF37] mb-2">Selected Players:</h4>
+                                  <div className="flex flex-wrap gap-2">
+                                    {match.selectedPlayersData?.slice(0, 3).map((player, index) => (
+                                      <span key={index} className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
+                                        {player.name}
+                                      </span>
+                                    ))}
+                                    {match.selectedPlayersData && match.selectedPlayersData.length > 3 && (
+                                      <span className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
+                                        +{match.selectedPlayersData.length - 3} more
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Action Buttons */}
                               <div className="flex space-x-2 pt-3">
-                                <button className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg">Edit</button>
-                                <button className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg">Cancel</button>
+                                <button
+                                  onClick={() => handleEditMatch(match)}
+                                  className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMatch(match._id)}
+                                  className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors"
+                                >
+                                  Delete
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -1097,6 +1204,16 @@ const AdminDashboard = () => {
               isOpen={showNewMatchModal}
               onClose={() => setShowNewMatchModal(false)}
               onAddMatch={handleAddMatch}
+            />
+            <NewMatchModal
+              isOpen={showEditMatchModal}
+              onClose={() => {
+                setShowEditMatchModal(false);
+                setEditingMatch(null);
+              }}
+              onAddMatch={handleUpdateMatch}
+              editing={editingMatch}
+              initialData={editingMatch}
             />
           </div>
         </div>

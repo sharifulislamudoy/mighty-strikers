@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 
-const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
+const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialData = null }) => {
+    const { data: session } = useSession();
     const [formData, setFormData] = useState({
         opponent: '',
         opponentLogo: null,
@@ -16,8 +18,77 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
         type: 'T20',
         selectedPlayers: []
     });
-
+    const [availablePlayers, setAvailablePlayers] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [initialFormData, setInitialFormData] = useState(null);
+
+    // Initialize form data for editing
+    useEffect(() => {
+        if (isOpen && editing && initialData) {
+            setFormData({
+                opponent: initialData.opponent || '',
+                opponentLogo: null, // Will keep existing URL
+                logoPreview: initialData.opponentLogo ? initialData.opponentLogo : null,
+                overs: initialData.overs || '',
+                venue: initialData.venue || '',
+                date: initialData.date || '',
+                time: initialData.time || '',
+                status: initialData.status || 'scheduled',
+                type: initialData.type || 'T20',
+                selectedPlayers: initialData.selectedPlayers || [] // Already _ids from handleEditMatch
+            });
+        } else if (isOpen && !editing) {
+            // Reset for new match
+            setFormData({
+                opponent: '',
+                opponentLogo: null,
+                logoPreview: null,
+                overs: '',
+                venue: '',
+                date: '',
+                time: '',
+                status: 'scheduled',
+                type: 'T20',
+                selectedPlayers: []
+            });
+            setInitialFormData(formData);
+            setSearchTerm('');
+        }
+    }, [isOpen, editing, initialData]);
+
+    // Fetch approved players
+    useEffect(() => {
+        if (isOpen && session) {
+            const fetchPlayers = async () => {
+                try {
+                    const response = await fetch('/api/players');
+                    if (response.ok) {
+                        const playersData = await response.json();
+                        const approvedPlayers = playersData.filter(player => player.status === 'approved');
+                        setAvailablePlayers(approvedPlayers);
+                    }
+                } catch (error) {
+                    console.error('Error fetching players:', error);
+                }
+            };
+            fetchPlayers();
+        }
+    }, [isOpen, session]);
+
+    const filteredPlayers = availablePlayers.filter(player =>
+        player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        player.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handlePlayerToggle = (playerId) => {
+        setFormData(prev => ({
+            ...prev,
+            selectedPlayers: prev.selectedPlayers.includes(playerId)
+                ? prev.selectedPlayers.filter(id => id !== playerId)
+                : [...prev.selectedPlayers, playerId]
+        }));
+    };
 
     const handleLogoUpload = (e) => {
         const file = e.target.files[0];
@@ -39,9 +110,12 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
         setIsUploading(true);
 
         try {
-            // First upload logo to Cloudinary if exists
             let logoUrl = '';
-            if (formData.opponentLogo) {
+            if (editing && initialData.opponentLogo && !(formData.opponentLogo instanceof File)) {
+                // Keep existing logo if no new file uploaded during edit
+                logoUrl = initialData.opponentLogo;
+            } else if (formData.opponentLogo) {
+                // Upload new logo
                 const logoFormData = new FormData();
                 logoFormData.append('file', formData.opponentLogo);
                 logoFormData.append('upload_preset', 'react_unsigned');
@@ -62,54 +136,76 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
                 logoUrl = uploadData.secure_url;
             }
 
+            // Get selected players data (usernames)
+            let selectedPlayersUsernames = [];
+            if (formData.selectedPlayers && formData.selectedPlayers.length > 0) {
+                // Get usernames from the selected player IDs
+                selectedPlayersUsernames = formData.selectedPlayers.map(playerId => {
+                    const player = availablePlayers.find(p => p._id === playerId);
+                    return player ? player.username : null;
+                }).filter(Boolean);
+            }
+
             // Prepare match data
             const matchData = {
                 opponent: formData.opponent,
-                opponentLogo: logoUrl,
+                opponentLogo: logoUrl || (editing && initialData.opponentLogo) || '',
                 overs: parseInt(formData.overs),
                 venue: formData.venue,
                 date: formData.date,
                 time: formData.time,
                 status: formData.status,
                 type: formData.type,
-                selectedPlayers: formData.selectedPlayers
+                selectedPlayers: selectedPlayersUsernames,
+                selectedPlayersData: formData.selectedPlayers.map(playerId => {
+                    const player = availablePlayers.find(p => p._id === playerId);
+                    return player ? { name: player.name, username: player.username } : null;
+                }).filter(Boolean)
             };
 
-            // Save to backend
+            // For edit, add matchId
+            if (editing && initialData._id) {
+                matchData.matchId = initialData._id;
+            }
+
+            // Save/Update to backend
+            const method = editing ? 'PUT' : 'POST';
             const response = await fetch('/api/matches', {
-                method: 'POST',
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(matchData),
+                body: JSON.stringify({ ...matchData, matchId: editing ? initialData._id : undefined }),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create match');
+                throw new Error(errorData.message || (editing ? 'Failed to update match' : 'Failed to create match'));
             }
 
-            const newMatch = await response.json();
-            onAddMatch(newMatch);
+            const savedMatch = await response.json();
+            onAddMatch(savedMatch); // Reuse for both add and update
             onClose();
 
-            // Reset form
-            setFormData({
-                opponent: '',
-                opponentLogo: null,
-                logoPreview: null,
-                overs: '',
-                venue: '',
-                date: '',
-                time: '',
-                status: 'scheduled',
-                type: 'T20',
-                selectedPlayers: []
-            });
+            // Reset form for new match
+            if (!editing) {
+                setFormData({
+                    opponent: '',
+                    opponentLogo: null,
+                    logoPreview: null,
+                    overs: '',
+                    venue: '',
+                    date: '',
+                    time: '',
+                    status: 'scheduled',
+                    type: 'T20',
+                    selectedPlayers: []
+                });
+                setSearchTerm('');
+            }
 
         } catch (error) {
-            console.error('Error creating match:', error);
-            // You might want to add toast notification here
+            console.error(`Error ${editing ? 'updating' : 'creating'} match:`, error);
             alert(`Error: ${error.message}`);
         } finally {
             setIsUploading(false);
@@ -118,21 +214,25 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
 
     if (!isOpen) return null;
 
+    const modalTitle = editing ? 'Edit Match' : 'Schedule New Match';
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+            onClick={onClose}
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                className="bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl overflow-hidden border border-[#2a2a2a] w-full max-w-4xl max-h-[90vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
             >
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto flex-1">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-[#D4AF37]">Schedule New Match</h2>
+                        <h2 className="text-2xl font-bold text-[#D4AF37]">{modalTitle}</h2>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-white"
@@ -166,11 +266,19 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
                                     onChange={handleLogoUpload}
                                     className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
                                 />
-                                {formData.logoPreview && (
+
+                                {/* Show only one preview at a time */}
+                                {formData.logoPreview ? (
                                     <div className="mt-2">
                                         <img src={formData.logoPreview} alt="Logo preview" className="w-16 h-16 object-contain rounded" />
+                                        <p className="text-xs text-gray-400 mt-1">New logo</p>
                                     </div>
-                                )}
+                                ) : editing && initialData.opponentLogo ? (
+                                    <div className="mt-2">
+                                        <img src={initialData.opponentLogo} alt="Current logo" className="w-16 h-16 object-contain rounded" />
+                                        <p className="text-xs text-gray-400 mt-1">Current logo</p>
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
 
@@ -237,6 +345,58 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
                             </div>
                         </div>
 
+                        {/* Player Selection Section */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">Select Players for Match</label>
+                            <div className="space-y-3">
+                                {/* Search Input */}
+                                <input
+                                    type="text"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    placeholder="Search players by name or category..."
+                                    className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
+                                />
+
+                                {/* Players List */}
+                                <div className="max-h-48 overflow-y-auto space-y-2">
+                                    {filteredPlayers.map((player) => (
+                                        <div key={player._id} className="flex items-center justify-between p-3 bg-[#0A0A0A] rounded-lg">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                                    {player.image ? (
+                                                        <img src={player.image} alt={player.name} className="w-8 h-8 rounded-full object-cover" />
+                                                    ) : (
+                                                        <span className="text-sm font-bold">{player.name.charAt(0)}</span>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium">{player.name}</div>
+                                                    <div className="text-xs text-gray-400">{player.category} • {player.username}</div>
+                                                </div>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.selectedPlayers.includes(player._id)}
+                                                    onChange={() => handlePlayerToggle(player._id)}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#D4AF37]"></div>
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Selected Players Count */}
+                                {formData.selectedPlayers.length > 0 && (
+                                    <div className="text-sm text-[#D4AF37] font-medium">
+                                        {formData.selectedPlayers.length} player{formData.selectedPlayers.length !== 1 ? 's' : ''} selected
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
                             <select
@@ -261,10 +421,11 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch }) => {
                             </button>
                             <button
                                 type="submit"
-                                disabled={isUploading}
-                                className="px-6 py-2 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-[#c59a2f] disabled:opacity-50"
+                                disabled={isUploading || formData.selectedPlayers.length === 0 ||
+                                    (editing && JSON.stringify(formData) === JSON.stringify(initialFormData))}
+                                className="px-6 py-2 rounded-lg bg-[#D4AF37] text-black font-semibold hover:bg-[#c59a2f] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isUploading ? 'Creating Match...' : 'Create Match'}
+                                {isUploading ? (editing ? 'Updating Match...' : 'Creating Match...') : (editing ? 'Update Match' : 'Create Match')}
                             </button>
                         </div>
                     </form>
