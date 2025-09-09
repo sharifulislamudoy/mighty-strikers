@@ -307,6 +307,7 @@ const AdminDashboard = () => {
   // Handle adding new match
   const handleAddMatch = (newMatch) => {
     setMatches([...matches, { ...newMatch, id: Date.now(), status: 'scheduled' }]);
+    toast.success('Match scheduled successfully!');
   };
 
   return (
