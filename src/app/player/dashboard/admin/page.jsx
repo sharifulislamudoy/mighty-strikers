@@ -8,7 +8,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import NewMatchModal from '@/Components/NewMatchModal';
 
-
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -31,13 +30,30 @@ const AdminDashboard = () => {
   const [showNewMatchModal, setShowNewMatchModal] = useState(false);
   const [editingMatch, setEditingMatch] = useState(null);
   const [showEditMatchModal, setShowEditMatchModal] = useState(false);
-
-
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [matchToDelete, setMatchToDelete] = useState(null);
   // Animation variants
   const tabVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
+  };
+
+  // Drawer animation variants
+  const drawerVariants = {
+    hidden: { x: '-100%' },
+    visible: {
+      x: 0,
+      transition: {
+        type: 'spring',
+        damping: 25,
+        stiffness: 200
+      }
+    },
+    exit: {
+      x: '-100%',
+      transition: { duration: 0.3 }
+    }
   };
 
   // Predefined particle positions
@@ -59,6 +75,15 @@ const AdminDashboard = () => {
     { id: 'matches', name: 'Match Moments' },
     { id: 'winning', name: 'Winning Moments' },
     { id: 'team', name: 'Team Photos' },
+  ];
+
+  // Navigation tabs data
+  const navTabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    { id: 'players', label: 'Player Management', icon: '👥' },
+    { id: 'matches', label: 'Match Schedule', icon: '🏏' },
+    { id: 'stats', label: 'Player Stats', icon: '📈' },
+    { id: 'gallery', label: 'Gallery', icon: '🖼️' },
   ];
 
   // Fetch gallery images from API
@@ -102,7 +127,6 @@ const AdminDashboard = () => {
         setMatches(data);
       } catch (error) {
         console.error('Error fetching matches:', error);
-        // Optionally, set fallback data or handle error state
         setMatches([]);
       }
     };
@@ -209,7 +233,6 @@ const AdminDashboard = () => {
         previews: [],
       });
 
-      // Refresh gallery
       const response = await fetch('/api/gallery');
       const data = await response.json();
       if (response.ok) {
@@ -314,8 +337,6 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteMatch = async (matchId) => {
-    if (!confirm('Are you sure you want to delete this match?')) return;
-
     try {
       const response = await fetch(`/api/matches`, {
         method: 'DELETE',
@@ -327,6 +348,7 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         setMatches(matches.filter((m) => m._id !== matchId));
+        setMatchToDelete(null);
         toast.success('Match deleted successfully!');
       } else {
         const data = await response.json();
@@ -339,20 +361,15 @@ const AdminDashboard = () => {
   };
 
   const handleEditMatch = async (match) => {
-    // Convert selectedPlayers usernames to _id for the modal
     if (match.selectedPlayers && match.selectedPlayers.length > 0) {
       try {
-        // Instead, fetch players first, then find IDs
         const response = await fetch('/api/players');
         if (response.ok) {
           const allPlayers = await response.json();
           const approvedPlayers = allPlayers.filter(p => p.status === 'approved');
-
-          // Find player IDs by username
           const playerIds = match.selectedPlayers
             .map(username => approvedPlayers.find(p => p.username === username)?._id)
-            .filter(id => id); // Remove nulls
-
+            .filter(id => id);
           setEditingMatch({
             ...match,
             selectedPlayers: playerIds
@@ -376,10 +393,15 @@ const AdminDashboard = () => {
     setEditingMatch(null);
   };
 
+  // Close drawer when tab is clicked
+  const handleTabClick = (tabId) => {
+    setActiveTab(tabId);
+    setIsDrawerOpen(false);
+  };
+
   return (
     <AdminProtected>
       <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white">
-        {/* Toaster for notifications */}
         <Toaster
           position="top-center"
           toastOptions={{
@@ -411,7 +433,6 @@ const AdminDashboard = () => {
         />
 
         <div className="w-11/12 mx-auto pt-20 pb-16">
-          {/* Animated background elements */}
           <div className="absolute inset-0 z-0 overflow-hidden">
             {particlePositions.map((pos, i) => (
               <motion.div
@@ -436,7 +457,6 @@ const AdminDashboard = () => {
           </div>
 
           <div className="container mx-auto px-4 md:px-6 relative z-10">
-            {/* Header Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -452,58 +472,91 @@ const AdminDashboard = () => {
               </p>
             </motion.div>
 
-            {/* Main content with sidebar layout on large screens */}
             <div className="flex flex-col lg:flex-row gap-6">
-              {/* Sidebar tabs for large devices */}
+              {/* Sidebar for large devices */}
               <div className="hidden lg:block w-full lg:w-1/4">
-                <div className="bg-[#1a1a1a] rounded-xl p-4">
-                  <h3 className="text-lg font-bold mb-4 text-[#D4AF37]">Navigation</h3>
-                  <div className="space-y-2">
-                    {[
-                      { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-                      { id: 'players', label: 'Player Management', icon: '👥' },
-                      { id: 'matches', label: 'Match Schedule', icon: '🏏' },
-                      { id: 'stats', label: 'Player Stats', icon: '📈' },
-                      { id: 'gallery', label: 'Gallery', icon: '🖼️' },
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
-                          }`}
-                      >
-                        <span className="text-xl">{tab.icon}</span>
-                        <span>{tab.label}</span>
-                      </button>
-                    ))}
+                <div className="sticky top-4 z-30">
+                  <div className="bg-[#1a1a1a] rounded-xl p-4">
+                    <h3 className="text-lg font-bold mb-4 text-[#D4AF37]">Navigation</h3>
+                    <div className="space-y-2">
+                      {navTabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${activeTab === tab.id
+                            ? 'bg-[#D4AF37] text-black font-bold'
+                            : 'text-white hover:bg-[#2a2a2a]'
+                            }`}
+                        >
+                          <span className="text-xl">{tab.icon}</span>
+                          <span>{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* Mobile Hamburger Menu Button */}
+              <div className="lg:hidden mb-6">
+                <button
+                  onClick={() => setIsDrawerOpen(true)}
+                  className="bg-[#1a1a1a] p-3 rounded-lg text-[#D4AF37] hover:bg-[#2a2a2a] transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Mobile Drawer */}
+              <AnimatePresence>
+                {isDrawerOpen && (
+                  <motion.div
+                    variants={drawerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="fixed lg:hidden inset-0 z-40 bg-black bg-opacity-50"
+                    onClick={() => setIsDrawerOpen(false)}
+                  >
+                    <motion.div
+                      className="w-64 h-full bg-[#1a1a1a] p-6 flex flex-col"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-lg font-bold text-[#D4AF37]">Navigation</h3>
+                        <button
+                          onClick={() => setIsDrawerOpen(false)}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        {navTabs.map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => handleTabClick(tab.id)}
+                            className={`w-full px-4 py-3 rounded-lg transition-all duration-300 flex items-center gap-3 ${activeTab === tab.id
+                              ? 'bg-[#D4AF37] text-black font-bold'
+                              : 'text-white hover:bg-[#2a2a2a]'
+                              }`}
+                          >
+                            <span className="text-xl">{tab.icon}</span>
+                            <span>{tab.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Content area */}
               <div className="w-full lg:w-3/4">
-                {/* Mobile tabs */}
-                <div className="lg:hidden bg-[#1a1a1a] rounded-xl p-2 mb-6 flex flex-wrap gap-2">
-                  {[
-                    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-                    { id: 'players', label: 'Players', icon: '👥' },
-                    { id: 'matches', label: 'Matches', icon: '🏏' },
-                    { id: 'stats', label: 'Stats', icon: '📈' },
-                    { id: 'gallery', label: 'Gallery', icon: '🖼️' },
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-2 ${activeTab === tab.id ? 'bg-[#D4AF37] text-black font-bold' : 'text-white hover:bg-[#2a2a2a]'
-                        }`}
-                    >
-                      <span>{tab.icon}</span>
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tab Content */}
                 <div className="bg-[#1a1a1a] rounded-xl p-6">
                   <AnimatePresence mode="wait">
                     {/* Dashboard Tab */}
@@ -773,6 +826,8 @@ const AdminDashboard = () => {
                         )}
                       </motion.div>
                     )}
+
+                    {/* Matches Tab */}
                     {activeTab === 'matches' && (
                       <motion.div key="matches" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
@@ -812,8 +867,6 @@ const AdminDashboard = () => {
                                   )}
                                 </div>
                               </div>
-
-                              {/* Match Details */}
                               <div className="space-y-2 mb-4">
                                 <div className="flex">
                                   <div className="w-24 text-gray-400">Date</div>
@@ -836,8 +889,6 @@ const AdminDashboard = () => {
                                   <div>{match.overs}</div>
                                 </div>
                               </div>
-
-                              {/* Selected Players */}
                               {match.selectedPlayers && match.selectedPlayers.length > 0 && (
                                 <div className="mb-4">
                                   <h4 className="text-sm font-semibold text-[#D4AF37] mb-2">Selected Players:</h4>
@@ -855,8 +906,6 @@ const AdminDashboard = () => {
                                   </div>
                                 </div>
                               )}
-
-                              {/* Action Buttons */}
                               <div className="flex space-x-2 pt-3">
                                 <button
                                   onClick={() => handleEditMatch(match)}
@@ -865,7 +914,7 @@ const AdminDashboard = () => {
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteMatch(match._id)}
+                                  onClick={() => setMatchToDelete(match)}
                                   className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors"
                                 >
                                   Delete
@@ -1199,7 +1248,8 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* Add this near your other modals */}
+
+            {/* Match Modals */}
             <NewMatchModal
               isOpen={showNewMatchModal}
               onClose={() => setShowNewMatchModal(false)}
@@ -1215,6 +1265,44 @@ const AdminDashboard = () => {
               editing={editingMatch}
               initialData={editingMatch}
             />
+            {/* Delete Match Confirmation Modal */}
+            <AnimatePresence>
+              {matchToDelete && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                    className="bg-[#1a1a1a] rounded-xl p-6 w-full max-w-md"
+                  >
+                    <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Confirm Deletion</h3>
+                    <p className="mb-6">
+                      Are you sure you want to delete the match against {matchToDelete.opponent}? This action cannot be undone.
+                    </p>
+                    <div className="flex space-x-4 justify-end">
+                      <button
+                        onClick={() => setMatchToDelete(null)}
+                        className="px-4 py-2 rounded-lg border border-gray-600 hover:bg-gray-800"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDeleteMatch(matchToDelete._id)}
+                        className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                      >
+                        Confirm Deletion
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -1223,3 +1311,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
