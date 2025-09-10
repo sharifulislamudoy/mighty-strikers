@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Mighty Strikers Cricket Club - Where Passion Meets Power!",
   description: "Join Mighty Strikers Cricket Club for competitive matches, and youth development programs. Elevate your cricket skills with our expert trainers and state-of-the-art facilities.",
-  keywords: "cricket club, cricket training, cricket matches, youth cricket, cricket coaching, cricket academy, friendly match",
+  keywords: "cricket club, cricket training, cricket matches, youth cricket, cricket coaching, cricket academy, friendly match, Mighty Strikers",
   authors: [{ name: "Mighty Strikers Cricket Club" }],
   openGraph: {
     title: "Mighty Strikers Cricket Club - Where Passion Meets Power!",
@@ -24,7 +24,7 @@ export const metadata = {
     siteName: "Mighty Strikers",
     images: [
       {
-        url: "/logo.png",
+        url: "https://res.cloudinary.com/dohhfubsa/image/upload/v1757486830/file_00000000cdf051f7a0188f4f67246467_cluct7.png",
         width: 1200,
         height: 630,
         alt: "Mighty Strikers Cricket Team",

@@ -26,32 +26,21 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
     // Initialize form data for editing
     useEffect(() => {
         if (isOpen && editing && initialData) {
-            setFormData({
-                opponent: initialData.opponent || '',
+            const newFormData = {
+                opponent: initialData.team2?.name || '',
                 opponentLogo: null,
-                logoPreview: initialData.opponentLogo ? initialData.opponentLogo : null,
-                overs: initialData.overs || '',
-                venue: initialData.venue || '',
-                date: initialData.date || '',
-                time: initialData.time || '',
-                status: initialData.status || 'scheduled',
-                type: initialData.type || '14/14',
-                selectedPlayers: initialData.selectedPlayers || []
-            });
-
-            // Store the initial form data for comparison
-            setInitialFormData({
-                opponent: initialData.opponent || '',
-                opponentLogo: null,
-                logoPreview: initialData.opponentLogo ? initialData.opponentLogo : null,
-                overs: initialData.overs || '',
+                logoPreview: initialData.team2?.logo || null,
+                overs: initialData.overs?.toString() || '',
                 venue: initialData.venue || '',
                 date: initialData.date || '',
                 time: initialData.time || '',
                 status: initialData.status || 'scheduled',
                 type: initialData.type || 'T20',
                 selectedPlayers: initialData.selectedPlayers || []
-            });
+            };
+
+            setFormData(newFormData);
+            setInitialFormData(newFormData);
         } else if (isOpen && !editing) {
             // Reset for new match
             const newFormData = {
@@ -127,9 +116,9 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
 
         try {
             let logoUrl = '';
-            if (editing && initialData.opponentLogo && !(formData.opponentLogo instanceof File)) {
+            if (editing && initialData.team2?.logo && !(formData.opponentLogo instanceof File)) {
                 // Keep existing logo if no new file uploaded during edit
-                logoUrl = initialData.opponentLogo;
+                logoUrl = initialData.team2.logo;
             } else if (formData.opponentLogo) {
                 // Upload new logo
                 const logoFormData = new FormData();
@@ -174,7 +163,7 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                 },
                 team2: {
                     name: formData.opponent,
-                    logo: logoUrl || (editing && initialData.opponentLogo) || ''
+                    logo: logoUrl || (editing && initialData.team2?.logo) || ''
                 },
                 overs: parseInt(formData.overs),
                 type: formData.type,
@@ -295,9 +284,9 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                                         <img src={formData.logoPreview} alt="Logo preview" className="w-16 h-16 object-contain rounded" />
                                         <p className="text-xs text-gray-400 mt-1">New logo</p>
                                     </div>
-                                ) : editing && initialData.opponentLogo ? (
+                                ) : editing && initialData.team2?.logo ? (
                                     <div className="mt-2">
-                                        <img src={initialData.opponentLogo} alt="Current logo" className="w-16 h-16 object-contain rounded" />
+                                        <img src={initialData.team2.logo} alt="Current logo" className="w-16 h-16 object-contain rounded" />
                                         <p className="text-xs text-gray-400 mt-1">Current logo</p>
                                     </div>
                                 ) : null}
@@ -430,8 +419,6 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                                 className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
                             >
                                 <option value="scheduled">Scheduled</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
                             </select>
                         </div>
 
