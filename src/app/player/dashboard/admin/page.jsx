@@ -83,7 +83,7 @@ const AdminDashboard = () => {
   const navTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'players', label: 'Management', icon: '👥' },
-    { id: 'matches', label: 'Match Schedule', icon: '🏏' },
+    { id: 'matches', label: 'Matches', icon: '🏏' },
     { id: 'stats', label: 'Player Stats', icon: '📈' },
     { id: 'gallery', label: 'Gallery', icon: '🖼️' },
   ];
@@ -1065,7 +1065,7 @@ const AdminDashboard = () => {
                     {activeTab === 'matches' && (
                       <motion.div key="matches" variants={tabVariants} initial="hidden" animate="visible" exit="exit">
                         <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-2xl font-bold text-[#D4AF37]">Match Schedule</h2>
+                          <h2 className="text-2xl font-bold text-[#D4AF37]">Matches</h2>
                           <button
                             onClick={() => setShowNewMatchModal(true)}
                             className="bg-[#D4AF37] text-black font-semibold py-2 px-4 rounded-lg"
@@ -1073,99 +1073,255 @@ const AdminDashboard = () => {
                             + New Match
                           </button>
                         </div>
-                        <div className="grid md:grid-cols-2 gap-6">
-                          {matches.map((match) => (
-                            <div key={match._id || match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
-                              <div className="flex justify-between items-start mb-4">
-                                <div className="flex items-center gap-3">
-                                  {match.team1 && match.team1.logo && (
-                                    <img src={match.team1.logo} alt={match.team1.name} className="w-8 h-8 rounded-full object-cover" />
-                                  )}
-                                  <h3 className="text-xl font-bold">Vs {match.team2 ? match.team2.name : 'Unknown Team'}</h3>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs ${match.status === 'scheduled'
-                                      ? 'bg-yellow-500/20 text-yellow-500'
-                                      : match.status === 'completed'
-                                        ? 'bg-green-500/20 text-green-500'
-                                        : 'bg-red-500/20 text-red-500'
-                                      }`}
-                                  >
-                                    {match.status}
-                                  </span>
+
+                        {/* Upcoming Matches Section */}
+                        <div className="mb-8">
+                          <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Upcoming Matches</h3>
+                          <div className="grid md:grid-cols-2 gap-6">
+                            {matches
+                              .filter(match => match.status === 'scheduled')
+                              .map((match) => (
+                                <div key={match._id || match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
+                                  <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-3">
+                                      {match.team1 && match.team1.logo && (
+                                        <img src={match.team1.logo} alt={match.team1.name} className="w-8 h-8 rounded-full object-cover" />
+                                      )}
+                                      <h3 className="text-xl font-bold">Vs {match.team2 ? match.team2.name : 'Unknown Team'}</h3>
+                                    </div>
+                                    <div className="flex flex-col items-end">
+                                      <span
+                                        className={`px-2 py-1 rounded-full text-xs ${match.status === 'scheduled'
+                                          ? 'bg-yellow-500/20 text-yellow-500'
+                                          : match.status === 'completed'
+                                            ? 'bg-green-500/20 text-green-500'
+                                            : 'bg-red-500/20 text-red-500'
+                                          }`}
+                                      >
+                                        {match.status}
+                                      </span>
+                                      {match.selectedPlayers && match.selectedPlayers.length > 0 && (
+                                        <span className="text-xs text-gray-400 mt-1">
+                                          {match.selectedPlayers.length} players
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2 mb-4">
+                                    <div className="flex">
+                                      <div className="w-24 text-gray-400">Date</div>
+                                      <div>{match.date}</div>
+                                    </div>
+                                    <div className="flex">
+                                      <div className="w-24 text-gray-400">Time</div>
+                                      <div>{match.time}</div>
+                                    </div>
+                                    <div className="flex">
+                                      <div className="w-24 text-gray-400">Venue</div>
+                                      <div>{match.venue}</div>
+                                    </div>
+                                    <div className="flex">
+                                      <div className="w-24 text-gray-400">Format</div>
+                                      <div>{match.type}</div>
+                                    </div>
+                                    <div className="flex">
+                                      <div className="w-24 text-gray-400">Overs</div>
+                                      <div>{match.overs}</div>
+                                    </div>
+                                  </div>
                                   {match.selectedPlayers && match.selectedPlayers.length > 0 && (
-                                    <span className="text-xs text-gray-400 mt-1">
-                                      {match.selectedPlayers.length} players
-                                    </span>
+                                    <div className="mb-4">
+                                      <h4 className="text-sm font-semibold text-[#D4AF37] mb-2">Selected Players:</h4>
+                                      <div className="flex flex-wrap gap-2">
+                                        {match.selectedPlayersData?.slice(0, 3).map((player, index) => (
+                                          <span key={index} className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
+                                            {player.name}
+                                          </span>
+                                        ))}
+                                        {match.selectedPlayersData && match.selectedPlayersData.length > 3 && (
+                                          <span className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
+                                            +{match.selectedPlayersData.length - 3} more
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
                                   )}
-                                </div>
-                              </div>
-                              <div className="space-y-2 mb-4">
-                                <div className="flex">
-                                  <div className="w-24 text-gray-400">Date</div>
-                                  <div>{match.date}</div>
-                                </div>
-                                <div className="flex">
-                                  <div className="w-24 text-gray-400">Time</div>
-                                  <div>{match.time}</div>
-                                </div>
-                                <div className="flex">
-                                  <div className="w-24 text-gray-400">Venue</div>
-                                  <div>{match.venue}</div>
-                                </div>
-                                <div className="flex">
-                                  <div className="w-24 text-gray-400">Format</div>
-                                  <div>{match.type}</div>
-                                </div>
-                                <div className="flex">
-                                  <div className="w-24 text-gray-400">Overs</div>
-                                  <div>{match.overs}</div>
-                                </div>
-                              </div>
-                              {match.selectedPlayers && match.selectedPlayers.length > 0 && (
-                                <div className="mb-4">
-                                  <h4 className="text-sm font-semibold text-[#D4AF37] mb-2">Selected Players:</h4>
-                                  <div className="flex flex-wrap gap-2">
-                                    {match.selectedPlayersData?.slice(0, 3).map((player, index) => (
-                                      <span key={index} className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
-                                        {player.name}
-                                      </span>
-                                    ))}
-                                    {match.selectedPlayersData && match.selectedPlayersData.length > 3 && (
-                                      <span className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
-                                        +{match.selectedPlayersData.length - 3} more
-                                      </span>
-                                    )}
+                                  <div className="flex space-x-2 pt-3">
+                                    <button
+                                      onClick={() => handleEditMatch(match)}
+                                      className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={() => setMatchToDelete(match)}
+                                      className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors"
+                                    >
+                                      Delete
+                                    </button>
                                   </div>
                                 </div>
-                              )}
-                              <div className="flex space-x-2 pt-3">
-                                <button
-                                  onClick={() => handleEditMatch(match)}
-                                  className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => setMatchToDelete(match)}
-                                  className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors"
-                                >
-                                  Delete
-                                </button>
+                              ))}
+                            {matches.filter(match => match.status === 'scheduled').length === 0 && (
+                              <div className="col-span-full text-center py-16">
+                                <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 className="text-xl font-bold text-gray-400">No upcoming matches</h3>
+                                <p className="text-gray-500 mt-2">Create your first match to get started</p>
                               </div>
-                            </div>
-                          ))}
-                          {matches.length === 0 && (
-                            <div className="col-span-full text-center py-16">
-                              <svg className="w-16 h-16 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <h3 className="text-xl font-bold text-gray-400">No matches scheduled</h3>
-                              <p className="text-gray-500 mt-2">Create your first match to get started</p>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
+
+                        {/* Publish Match Result Section */}
+                        <div className="mt-8">
+                          <h3 className="text-lg sm:text-xl font-bold mb-4 text-[#D4AF37]">Publish Match Result</h3>
+                          <div className="bg-[#0A0A0A] rounded-xl p-4 sm:p-6 border border-[#2a2a2a]">
+                            {matches.filter(match => match.status === 'scheduled').length === 0 ? (
+                              <div className="text-center py-8 text-gray-400">
+                                <svg className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h4 className="text-base sm:text-lg font-medium mb-2">No scheduled matches available</h4>
+                                <p className="text-xs sm:text-sm">Publish results for completed matches here. Create or edit matches to update their status.</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-4">
+                                {matches
+                                  .filter(match => match.status === 'scheduled')
+                                  .map((match) => (
+                                    <div
+                                      key={match._id || match.id}
+                                      className="bg-[#1a1a1a] p-4 rounded-lg flex flex-col sm:flex-row sm:justify-between sm:items-center"
+                                    >
+                                      <div className="flex-1 mb-4 sm:mb-0">
+                                        <div className="flex items-center space-x-3 mb-1">
+                                          {match.team1 && match.team1.logo && (
+                                            <img
+                                              src={match.team1.logo}
+                                              alt={match.team1.name}
+                                              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover"
+                                            />
+                                          )}
+                                          <div>
+                                            <h4 className="font-semibold text-[#D4AF37] text-sm sm:text-base">
+                                              Vs {match.team2 ? match.team2.name : 'Unknown Team'}
+                                            </h4>
+                                            <p className="text-xs sm:text-sm text-gray-400">
+                                              {match.date} • {match.venue} • {match.time}
+                                            </p>
+                                          </div>
+                                        </div>
+                                        {match.selectedPlayers && match.selectedPlayers.length > 0 && (
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {match.selectedPlayers.length} players selected
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center space-x-2 sm:space-x-3">
+                                        <span className="px-2 py-1 bg-yellow-500/20 text-yellow-500 text-xs font-medium rounded-full">
+                                          Scheduled
+                                        </span>
+                                        <button
+                                          onClick={() => handleEditMatch(match)}
+                                          className="bg-[#D4AF37] text-black cursor-pointer font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg text-xs sm:text-sm hover:bg-[#c59a2f] transition-colors"
+                                        >
+                                          Publish Result
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Completed Matches Section (Optional - for reference) */}
+                        {matches.filter(match => match.status === 'completed').length > 0 && (
+                          <div className="mt-8">
+                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Completed Matches</h3>
+                            <div className="grid md:grid-cols-2 gap-6">
+                              {matches
+                                .filter(match => match.status === 'completed')
+                                .map((match) => (
+                                  <div key={match._id || match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
+                                    <div className="flex justify-between items-start mb-4">
+                                      <div className="flex items-center gap-3">
+                                        {match.team1 && match.team1.logo && (
+                                          <img src={match.team1.logo} alt={match.team1.name} className="w-8 h-8 rounded-full object-cover" />
+                                        )}
+                                        <h3 className="text-xl font-bold">Vs {match.team2 ? match.team2.name : 'Unknown Team'}</h3>
+                                      </div>
+                                      <div className="flex flex-col items-end">
+                                        <span className="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-500">
+                                          Completed
+                                        </span>
+                                        {match.result && (
+                                          <span className="text-xs text-green-400 mt-1 font-medium">
+                                            {match.result}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="space-y-2 mb-4">
+                                      <div className="flex">
+                                        <div className="w-24 text-gray-400">Date</div>
+                                        <div>{match.date}</div>
+                                      </div>
+                                      <div className="flex">
+                                        <div className="w-24 text-gray-400">Time</div>
+                                        <div>{match.time}</div>
+                                      </div>
+                                      <div className="flex">
+                                        <div className="w-24 text-gray-400">Venue</div>
+                                        <div>{match.venue}</div>
+                                      </div>
+                                      <div className="flex">
+                                        <div className="w-24 text-gray-400">Format</div>
+                                        <div>{match.type}</div>
+                                      </div>
+                                      <div className="flex">
+                                        <div className="w-24 text-gray-400">Overs</div>
+                                        <div>{match.overs}</div>
+                                      </div>
+                                    </div>
+                                    {match.selectedPlayers && match.selectedPlayers.length > 0 && (
+                                      <div className="mb-4">
+                                        <h4 className="text-sm font-semibold text-[#D4AF37] mb-2">Players:</h4>
+                                        <div className="flex flex-wrap gap-2">
+                                          {match.selectedPlayersData?.slice(0, 3).map((player, index) => (
+                                            <span key={index} className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
+                                              {player.name}
+                                            </span>
+                                          ))}
+                                          {match.selectedPlayersData && match.selectedPlayersData.length > 3 && (
+                                            <span className="px-2 py-1 bg-[#2a2a2a] text-xs rounded-full">
+                                              +{match.selectedPlayersData.length - 3} more
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                    <div className="flex space-x-2 pt-3">
+                                      <button
+                                        onClick={() => handleEditMatch(match)}
+                                        className="flex-1 bg-[#2a2a2a] text-white font-semibold py-2 rounded-lg hover:bg-[#D4AF37] hover:text-black transition-colors"
+                                      >
+                                        View Details
+                                      </button>
+                                      <button
+                                        onClick={() => setMatchToDelete(match)}
+                                        className="flex-1 bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        )}
                       </motion.div>
                     )}
 
