@@ -28,7 +28,21 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
         if (isOpen && editing && initialData) {
             setFormData({
                 opponent: initialData.opponent || '',
-                opponentLogo: null, // Will keep existing URL
+                opponentLogo: null,
+                logoPreview: initialData.opponentLogo ? initialData.opponentLogo : null,
+                overs: initialData.overs || '',
+                venue: initialData.venue || '',
+                date: initialData.date || '',
+                time: initialData.time || '',
+                status: initialData.status || 'scheduled',
+                type: initialData.type || '14/14',
+                selectedPlayers: initialData.selectedPlayers || []
+            });
+
+            // Store the initial form data for comparison
+            setInitialFormData({
+                opponent: initialData.opponent || '',
+                opponentLogo: null,
                 logoPreview: initialData.opponentLogo ? initialData.opponentLogo : null,
                 overs: initialData.overs || '',
                 venue: initialData.venue || '',
@@ -36,11 +50,11 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                 time: initialData.time || '',
                 status: initialData.status || 'scheduled',
                 type: initialData.type || 'T20',
-                selectedPlayers: initialData.selectedPlayers || [] 
+                selectedPlayers: initialData.selectedPlayers || []
             });
         } else if (isOpen && !editing) {
             // Reset for new match
-            setFormData({
+            const newFormData = {
                 opponent: '',
                 opponentLogo: null,
                 logoPreview: null,
@@ -51,8 +65,10 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                 status: 'scheduled',
                 type: 'T20',
                 selectedPlayers: []
-            });
-            setInitialFormData(formData);
+            };
+
+            setFormData(newFormData);
+            setInitialFormData(newFormData);
             setSearchTerm('');
         }
     }, [isOpen, editing, initialData]);
