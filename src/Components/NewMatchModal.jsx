@@ -36,7 +36,7 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                 time: initialData.time || '',
                 status: initialData.status || 'scheduled',
                 type: initialData.type || 'T20',
-                selectedPlayers: initialData.selectedPlayers || [] // Already _ids from handleEditMatch
+                selectedPlayers: initialData.selectedPlayers || [] 
             });
         } else if (isOpen && !editing) {
             // Reset for new match
@@ -146,15 +146,21 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                 }).filter(Boolean);
             }
 
-            // Prepare match data
+            // Prepare match data with the required structure
             const matchData = {
-                opponent: formData.opponent,
-                opponentLogo: logoUrl || (editing && initialData.opponentLogo) || '',
-                overs: parseInt(formData.overs),
-                venue: formData.venue,
                 date: formData.date,
                 time: formData.time,
+                venue: formData.venue,
                 status: formData.status,
+                team1: {
+                    name: "Mighty Strikers",
+                    logo: "/logo.png"
+                },
+                team2: {
+                    name: formData.opponent,
+                    logo: logoUrl || (editing && initialData.opponentLogo) || ''
+                },
+                overs: parseInt(formData.overs),
                 type: formData.type,
                 selectedPlayers: selectedPlayersUsernames,
                 selectedPlayersData: formData.selectedPlayers.map(playerId => {
@@ -302,9 +308,12 @@ const NewMatchModal = ({ isOpen, onClose, onAddMatch, editing = false, initialDa
                                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                     className="w-full bg-[#2a2a2a] text-white rounded-lg p-3 border border-[#3a3a3a] focus:border-[#D4AF37] focus:outline-none"
                                 >
-                                    <option value="T20">T20</option>
-                                    <option value="ODI">One Day</option>
-                                    <option value="Test">Test</option>
+                                    <option value="Friendly">Friendly</option>
+                                    <option value="Series-1">Series-1</option>
+                                    <option value="Series-2">Series-2</option>
+                                    <option value="Series-3">Series-3</option>
+                                    <option value="Series-4">Series-4</option>
+                                    <option value="Series-5">Series-5</option>
                                 </select>
                             </div>
                         </div>

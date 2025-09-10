@@ -82,7 +82,7 @@ const AdminDashboard = () => {
   // Navigation tabs data
   const navTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'players', label: 'Player Management', icon: '👥' },
+    { id: 'players', label: 'Management', icon: '👥' },
     { id: 'matches', label: 'Match Schedule', icon: '🏏' },
     { id: 'stats', label: 'Player Stats', icon: '📈' },
     { id: 'gallery', label: 'Gallery', icon: '🖼️' },
@@ -774,7 +774,7 @@ const AdminDashboard = () => {
                             <div className="text-3xl font-bold text-[#D4AF37]">
                               {stats.reduce((sum, player) => sum + player.matches, 0)}
                             </div>
-                            <div className="text-gray-400">Total Matches Played</div>
+                            <div className="text-gray-400">Total Matches</div>
                           </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-6">
@@ -784,7 +784,7 @@ const AdminDashboard = () => {
                               {matches.slice(0, 3).map((match) => (
                                 <div key={match.id || match._id} className="bg-[#0A0A0A] p-3 rounded-lg">
                                   <div className="flex justify-between items-center">
-                                    <span className="font-bold">Vs {match.opponent}</span>
+                                    <span className="font-bold">Vs {match.team2.name}</span>
                                     <span className="text-sm text-gray-400">{match.date}</span>
                                   </div>
                                   <p className="text-sm text-gray-400">
@@ -886,8 +886,9 @@ const AdminDashboard = () => {
                           </div>
                         )}
                         <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Current Players</h3>
-                        <div className="hidden sm:block overflow-x-auto">
-                          <table className="w-full">
+                        <div className="hidden sm:block overflow-x-auto scrollbar-black">
+
+                          <table className="w-[1000px]">
                             <thead>
                               <tr className="border-b border-[#2a2a2a]">
                                 <th className="text-left py-3">Player</th>
@@ -906,7 +907,7 @@ const AdminDashboard = () => {
                                 return (
                                   <tr key={player._id} className="border-b border-[#2a2a2a] hover:bg-[#0A0A0A]">
                                     <td className="py-3 flex items-center space-x-3">
-                                      <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                      <div className="w-10 h-10 rounded-full overflow-hidden bg-[#2a2a2a] flex items-center justify-center">
                                         {player.image ? (
                                           <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
                                         ) : (
@@ -944,7 +945,7 @@ const AdminDashboard = () => {
                             return (
                               <div key={player._id} className="p-4 border border-[#2a2a2a] rounded-lg hover:bg-[#0A0A0A]">
                                 <div className="flex items-center space-x-3 mb-2">
-                                  <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[#2a2a2a] flex items-center justify-center">
                                     {player.image ? (
                                       <Image src={player.image} alt={player.name} width={40} height={40} className="rounded-full" />
                                     ) : (
@@ -1077,10 +1078,10 @@ const AdminDashboard = () => {
                             <div key={match._id || match.id} className="bg-[#0A0A0A] rounded-xl p-5 border border-[#2a2a2a]">
                               <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                  {match.opponentLogo && (
-                                    <img src={match.opponentLogo} alt={match.opponent} className="w-8 h-8 rounded-full object-cover" />
+                                  {match.team1 && match.team1.logo && (
+                                    <img src={match.team1.logo} alt={match.team1.name} className="w-8 h-8 rounded-full object-cover" />
                                   )}
-                                  <h3 className="text-xl font-bold">Vs {match.opponent}</h3>
+                                  <h3 className="text-xl font-bold">Vs {match.team2 ? match.team2.name : 'Unknown Team'}</h3>
                                 </div>
                                 <div className="flex flex-col items-end">
                                   <span
@@ -1221,7 +1222,7 @@ const AdminDashboard = () => {
                               <div key={stat.playerId} className="bg-[#0A0A0A] p-4 rounded-lg border border-[#2a2a2a]">
                                 <div className="flex items-center justify-between mb-3">
                                   <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-full  overflow-hidden bg-[#2a2a2a] flex items-center justify-center">
                                       {stat.image ? (
                                         <Image src={stat.image} alt={stat.name} width={40} height={40} className="rounded-full" />
                                       ) : (

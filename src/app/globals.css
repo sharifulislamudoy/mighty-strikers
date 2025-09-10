@@ -52,3 +52,22 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #1a1a1a #000000;
 }
+
+.scrollbar-black::-webkit-scrollbar {
+  height: 8px;
+  background-color: #0A0A0A;
+}
+
+.scrollbar-black::-webkit-scrollbar-track {
+  background-color: #0A0A0A;
+  border-radius: 4px;
+}
+
+.scrollbar-black::-webkit-scrollbar-thumb {
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.scrollbar-black::-webkit-scrollbar-thumb:hover {
+  background-color: #3a3a3a;
+}
