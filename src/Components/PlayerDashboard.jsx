@@ -103,14 +103,17 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 switch (field) {
                     case 'matches':
                         updatedDetails.matches = parseInt(value) || 0;
-                        updatedDetails.average = updatedDetails.matches > 0
-                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
+                        break;
+                    case 'innings':
+                        updatedDetails.innings = parseInt(value) || 0;
+                        updatedDetails.average = updatedDetails.innings > 0
+                            ? parseFloat((updatedDetails.runs / updatedDetails.innings).toFixed(2))
                             : 0;
                         break;
                     case 'runs':
                         updatedDetails.runs = parseInt(value) || 0;
-                        updatedDetails.average = updatedDetails.matches > 0
-                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
+                        updatedDetails.average = updatedDetails.innings > 0
+                            ? parseFloat((updatedDetails.runs / updatedDetails.innings).toFixed(2))
                             : 0;
                         break;
                     case 'strikeRate':
@@ -133,6 +136,9 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 }
             } else {
                 switch (field) {
+                    case 'bowlingInnings':
+                        updatedDetails.bowlingInnings = parseInt(value) || 0;
+                        break;
                     case 'wickets':
                         updatedDetails.wickets = parseInt(value) || 0;
                         break;
@@ -641,6 +647,22 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                                 </div>
                                             </div>
                                             <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Innings</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.innings || 0}
+                                                            onChange={(e) => handleInputChange('innings', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.innings || 0}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                 <span className="text-gray-400">Runs</span>
                                                 <div className="flex items-center gap-2">
                                                     {isEditing ? (
@@ -750,6 +772,22 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                     >
                                         <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Bowling Statistics</h3>
                                         <div className="space-y-4">
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Innings</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.bowlingInnings || 0}
+                                                            onChange={(e) => handleInputChange('bowlingInnings', e.target.value, false)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.bowlingInnings || 0}</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                             <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                                 <span className="text-gray-400">Wickets</span>
                                                 <div className="flex items-center gap-2">
