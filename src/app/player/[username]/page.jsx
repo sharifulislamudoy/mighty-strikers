@@ -179,8 +179,6 @@ const PlayerDetailsPage = () => {
                 return <OverviewTab player={player} playerDetails={playerDetails} />;
             case 'stats':
                 return <StatsTab playerDetails={playerDetails} />;
-            case 'performance':
-                return <PerformanceTab playerDetails={playerDetails} />;
             default:
                 return <OverviewTab player={player} playerDetails={playerDetails} />;
         }
@@ -406,12 +404,6 @@ const PlayerDetailsPage = () => {
                             >
                                 Stats
                             </TabButton>
-                            <TabButton
-                                active={activeTab === 'performance'}
-                                onClick={() => setActiveTab('performance')}
-                            >
-                                Performance
-                            </TabButton>
                         </motion.div>
 
                         {/* Tab Content with Animation */}
@@ -619,63 +611,5 @@ const StatsTab = ({ playerDetails }) => {
     );
 };
 
-const PerformanceTab = ({ playerDetails }) => {
-    const hasPerformanceData = playerDetails?.recentPerformance?.length > 0;
-
-    if (!hasPerformanceData) {
-        return (
-            <div className="flex flex-col items-center justify-center h-64">
-                <svg className="w-16 h-16 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <p className="text-gray-400 text-lg">No performance data available for this player</p>
-            </div>
-        );
-    }
-
-    return (
-        <div>
-            <h2 className="text-2xl font-bold mb-6 text-[#D4AF37]">Recent Performance</h2>
-
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead>
-                        <tr className="border-b border-[#2a2a2a]">
-                            <th className="text-left py-2 text-gray-400">Match</th>
-                            <th className="text-left py-2 text-gray-400">Runs</th>
-                            <th className="text-left py-2 text-gray-400">Wickets</th>
-                            <th className="text-left py-2 text-gray-400">Result</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {playerDetails.recentPerformance.map((match, index) => (
-                            <tr key={index} className="border-b border-[#2a2a2a] last:border-0">
-                                <td className="py-3">{match.opponent}</td>
-                                <td className="py-3">{match.runs || '-'}</td>
-                                <td className="py-3">{match.wickets || '-'}</td>
-                                <td className="py-3">
-                                    <span className={`px-2 py-1 rounded text-xs ${match.result === 'win' ? 'bg-green-900 text-green-300' :
-                                        match.result === 'loss' ? 'bg-red-900 text-red-300' :
-                                            'bg-gray-800 text-gray-300'
-                                        }`}>
-                                        {match.result || 'draw'}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Performance Summary */}
-            {playerDetails.performanceSummary && (
-                <div className="mt-6 bg-[#0A0A0A] p-4 rounded-lg border border-[#2a2a2a]">
-                    <h3 className="text-lg font-semibold mb-3 text-[#D4AF37]">Performance Summary</h3>
-                    <p className="text-gray-300">{playerDetails.performanceSummary}</p>
-                </div>
-            )}
-        </div>
-    );
-};
 
 export default PlayerDetailsPage;

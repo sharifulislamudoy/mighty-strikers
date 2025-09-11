@@ -7,6 +7,7 @@ import AdminProtected from '@/Components/AdminProtected';
 import toast, { Toaster } from 'react-hot-toast';
 import { useSession } from 'next-auth/react';
 import NewMatchModal from '@/Components/NewMatchModal';
+import PublishResultModal from '@/Components/PublishResultModal';
 
 const AdminDashboard = () => {
   const { data: session } = useSession();
@@ -15,7 +16,7 @@ const AdminDashboard = () => {
   const [pendingPlayers, setPendingPlayers] = useState([]);
   const [matches, setMatches] = useState([]);
   const [gallery, setGallery] = useState([]);
-  const [stats, setStats] = useState([]); // This will now hold actual player stats
+  const [stats, setStats] = useState([]);
   const [loadingStats, setLoadingStats] = useState(false);
   const [playerToDelete, setPlayerToDelete] = useState(null);
   const [playerToReject, setPlayerToReject] = useState(null);
@@ -33,6 +34,8 @@ const AdminDashboard = () => {
   const [showEditMatchModal, setShowEditMatchModal] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState(null);
+  const [showPublishResultModal, setShowPublishResultModal] = useState(false);
+  const [selectedMatchForResult, setSelectedMatchForResult] = useState(null);
 
   // Animation variants
   const tabVariants = {
@@ -591,6 +594,33 @@ const AdminDashboard = () => {
       return bestBowling;
     }
     return bestBowling || '0/0';
+  };
+
+  const handlePublishResult = async (resultData) => {
+    try {
+      // Send to backend (new endpoint)
+      const response = await fetch('/api/results', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultData),
+      });
+      if (!response.ok) throw new Error('Failed to save result');
+
+      // Update match status to completed
+      await fetch('/api/matches', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchId: resultData.matchId, status: 'completed' }),
+      });
+
+      // Refetch matches
+      const matchesRes = await fetch('/api/matches');
+      const updatedMatches = await matchesRes.json();
+      setMatches(updatedMatches);
+    } catch (error) {
+      console.error('Error publishing result:', error);
+      toast.error('Failed to publish result');
+    }
   };
 
   return (
@@ -1224,7 +1254,7 @@ const AdminDashboard = () => {
                                           Scheduled
                                         </span>
                                         <button
-                                          onClick={() => handleEditMatch(match)}
+                                          onClick={() => { setSelectedMatchForResult(match); setShowPublishResultModal(true); }}
                                           className="bg-[#D4AF37] text-black cursor-pointer font-semibold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg text-xs sm:text-sm hover:bg-[#c59a2f] transition-colors"
                                         >
                                           Publish Result
@@ -1896,6 +1926,12 @@ const AdminDashboard = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+            <PublishResultModal
+              isOpen={showPublishResultModal}
+              onClose={() => { setShowPublishResultModal(false); setSelectedMatchForResult(null); }}
+              onPublishResult={handlePublishResult}
+              match={selectedMatchForResult}
+            />
           </div>
         </div>
       </div>

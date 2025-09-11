@@ -673,12 +673,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 >
                                     Overview
                                 </button>
-                                <button
-                                    className={`px-4 py-3 font-medium ${activeTab === 'performance' ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]' : 'text-gray-400'}`}
-                                    onClick={() => setActiveTab('performance')}
-                                >
-                                    Performance
-                                </button>
                             </motion.div>
 
                             {/* Tab Content */}
@@ -906,60 +900,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                                 </div>
                                             </div>
                                         </motion.div>
-                                    </div>
-                                </motion.div>
-
-                                {/* Performance Tab */}
-                                <motion.div
-                                    className={activeTab !== 'performance' ? 'hidden' : ''}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={activeTab === 'performance' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                                    transition={{ duration: 0.3 }}
-
-                                >
-                                    <div className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg">
-                                        <h3 className="text-xl font-bold mb-6 text-[#D4AF37]">Recent Performance</h3>
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full">
-                                                <thead>
-                                                    <tr className="border-b border-[#2a2a2a]">
-                                                        <th className="py-3 text-left">Match</th>
-                                                        <th className="py-3 text-right">Runs</th>
-                                                        <th className="py-3 text-right">Balls</th>
-                                                        <th className="py-3 text-right">Wickets</th>
-                                                        <th className="py-3 text-right">Result</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {currentPlayerDetails.recentPerformance && currentPlayerDetails.recentPerformance.map((match, index) => (
-                                                        <motion.tr
-                                                            key={index}
-                                                            initial={{ opacity: 0 }}
-                                                            animate={{ opacity: 1 }}
-                                                            transition={{ delay: index * 0.1 }}
-                                                            className="border-b border-[#2a2a2a] hover:bg-[#2a2a2a] transition-colors"
-                                                        >
-                                                            <td className="py-3">{match.match}</td>
-                                                            <td className="py-3 text-right font-bold">{match.runs}</td>
-                                                            <td className="py-3 text-right">{match.balls}</td>
-                                                            <td className="py-3 text-right">{match.wickets}</td>
-                                                            <td className="py-3 text-right">
-                                                                <span className={`px-2 py-1 rounded-full text-xs ${match.result === 'Won' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
-                                                                    {match.result}
-                                                                </span>
-                                                            </td>
-                                                        </motion.tr>
-                                                    ))}
-                                                    {(!currentPlayerDetails.recentPerformance || currentPlayerDetails.recentPerformance.length === 0) && (
-                                                        <tr>
-                                                            <td colSpan="5" className="py-4 text-center text-gray-400">
-                                                                No recent performance data available
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
                                     </div>
                                 </motion.div>
                             </div>

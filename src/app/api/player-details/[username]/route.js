@@ -28,7 +28,6 @@ export async function GET(request, { params }) {
         threeWickets: 0,
         fiveWickets: 0,
         maidens: 0,
-        recentPerformance: []
       });
     }
 
