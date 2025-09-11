@@ -364,7 +364,7 @@ const TeamPage = () => {
                                                 <div className="relative h-64 overflow-hidden">
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10" />
                                                     <Image
-                                                        src={member.image || '/default-player.jpg'}
+                                                        src={member.image || '/Mighty Strikers_ Golden Power.png'}
                                                         alt={member.name}
                                                         fill
                                                         className="object-cover"

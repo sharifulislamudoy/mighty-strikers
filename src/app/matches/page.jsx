@@ -7,54 +7,65 @@ import Image from 'next/image';
 const MatchPage = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [matches, setMatches] = useState([]);
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch matches from backend
+  // Fetch matches and results from backend
   useEffect(() => {
-    const fetchMatches = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/matches');
-        if (!response.ok) {
+
+        // Fetch matches
+        const matchesResponse = await fetch('/api/matches');
+        if (!matchesResponse.ok) {
           throw new Error('Failed to fetch matches');
         }
-        const data = await response.json();
-        setMatches(data);
+        const matchesData = await matchesResponse.json();
+        setMatches(matchesData);
+
+        // Fetch results
+        const resultsResponse = await fetch('/api/results');
+        if (!resultsResponse.ok) {
+          throw new Error('Failed to fetch results');
+        }
+        const resultsData = await resultsResponse.json();
+        setResults(resultsData);
+
         setError(null);
       } catch (err) {
-        console.error('Error fetching matches:', err);
-        setError('Failed to load matches. Please try again later.');
+        console.error('Error fetching data:', err);
+        setError('Failed to load data. Please try again later.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMatches();
+    fetchData();
   }, []);
 
-  // Check screen size
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkIsMobile();
-    window.addEventListener('resize', checkIsMobile);
-    return () => window.removeEventListener('resize', checkIsMobile);
-  }, []);
 
   // Filter matches based on status
   const upcomingMatches = useMemo(
     () => matches.filter((match) => match.status === 'scheduled'),
     [matches]
   );
-  const completedMatches = useMemo(
-    () => matches.filter((match) => match.status === 'completed'),
-    [matches]
-  );
+
+  const completedMatches = useMemo(() => {
+    return results.map((result) => {
+      const match = matches.find((m) => m._id === result.matchId);
+      return match
+        ? {
+          ...match,
+          team1: { ...match.team1, ...result.team1 },
+          team2: { ...match.team2, ...result.team2 },
+          result: result.result,
+        }
+        : null;
+    }).filter((match) => match !== null);
+  }, [matches, results]);
 
   // Predefined particle positions
   const particlePositions = useMemo(
@@ -101,34 +112,47 @@ const MatchPage = () => {
   const getBorderColor = (match) => {
     if (match.status === 'scheduled') return 'border-[#D4AF37]';
     if (match.team1.name === 'Mighty Strikers') {
-      return match.team1.result === 'won' ? 'border-green-500' : 'border-red-500';
+      if (match.team1.result === 'won') return 'border-green-500';
+      if (match.team1.result === 'lost') return 'border-red-500';
+      if (match.team1.result === 'tie') return 'border-yellow-500';
     } else {
-      return match.team2.result === 'won' ? 'border-green-500' : 'border-red-500';
+      if (match.team2.result === 'won') return 'border-green-500';
+      if (match.team2.result === 'lost') return 'border-red-500';
+      if (match.team2.result === 'tie') return 'border-yellow-500';
     }
+    return 'border-[#D4AF37]'; // Fallback
   };
 
   // Get result text for completed matches
   const getResultText = (match) => {
     if (match.status === 'scheduled') return null;
 
-    // Check if score data is available
-    if (!match.team1.score || !match.team2.score) {
-      return match.team1.result === 'won' ? 'Won' : 'Lost';
-    }
-
     if (match.team1.name === 'Mighty Strikers') {
       if (match.team1.result === 'won') {
-        return `Won by ${parseInt(match.team1.score.split('/')[0]) - parseInt(match.team2.score.split('/')[0])} runs`;
-      } else {
-        return `Lost by ${10 - parseInt(match.team2.score.split('/')[1])} wickets`;
+        return match.team1.score && match.team2.score
+          ? `Won by ${match.team1.runs - match.team2.runs} runs`
+          : 'Won';
+      } else if (match.team1.result === 'lost') {
+        return match.team1.score && match.team2.score
+          ? `Lost by ${10 - parseInt(match.team2.score.split('/')[1])} wickets`
+          : 'Lost';
+      } else if (match.team1.result === 'tie') {
+        return 'Match tied';
       }
     } else {
       if (match.team2.result === 'won') {
-        return `Won by ${10 - parseInt(match.team1.score.split('/')[1])} wickets`;
-      } else {
-        return `Lost by ${parseInt(match.team2.score.split('/')[0]) - parseInt(match.team1.score.split('/')[0])} runs`;
+        return match.team1.score && match.team2.score
+          ? `Won by ${10 - parseInt(match.team1.score.split('/')[1])} wickets`
+          : 'Won';
+      } else if (match.team2.result === 'lost') {
+        return match.team1.score && match.team2.score
+          ? `Lost by ${match.team2.runs - match.team1.runs} runs`
+          : 'Lost';
+      } else if (match.team2.result === 'tie') {
+        return 'Match tied';
       }
     }
+    return match.result || 'Result not available';
   };
 
   // Render team logo or fallback initials
@@ -271,11 +295,10 @@ const MatchPage = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 font-medium capitalize text-lg ${
-                  activeTab === tab
+                className={`px-6 py-3 font-medium capitalize text-lg ${activeTab === tab
                     ? 'text-[#D4AF37] border-b-2 border-[#D4AF37]'
                     : 'text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 {tab === 'upcoming' ? 'Upcoming' : 'Results'}
               </button>
@@ -378,7 +401,6 @@ const MatchPage = () => {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-sm text-[#D4AF37] font-semibold">{match.type}</div>
-                    
                       </div>
 
                       <div className="flex items-center justify-between mb-6">
@@ -415,13 +437,8 @@ const MatchPage = () => {
                       </div>
 
                       <div className="text-center border-t border-[#2a2a2a] pt-4">
-                        <div
-                          className={`text-sm font-semibold ${getBorderColor(match).replace(
-                            'border-',
-                            'text-'
-                          )}`}
-                        >
-                          Mighty Strikers {getResultText(match)}
+                        <div>
+                          {match.result}
                         </div>
                         <div className="text-xs text-gray-400 mt-2">
                           {match.date} | {match.venue}
@@ -453,7 +470,7 @@ const MatchPage = () => {
                 transition={{ type: 'spring', stiffness: 300 }}
               >
                 <div className="text-4xl font-bold text-[#D4AF37]">
-                  {matches.length}
+                  {completedMatches.length}
                 </div>
                 <div className="text-gray-400 mt-2">Matches Played</div>
               </motion.div>
@@ -464,13 +481,10 @@ const MatchPage = () => {
               >
                 <div className="text-4xl font-bold text-green-500">
                   {
-                    matches.filter(
+                    completedMatches.filter(
                       (match) =>
-                        match.status === 'completed' &&
-                        ((match.team1.name === 'Mighty Strikers' &&
-                          match.team1.result === 'won') ||
-                          (match.team2.name === 'Mighty Strikers' &&
-                            match.team2.result === 'won'))
+                        (match.team1.name === 'Mighty Strikers' && match.team1.result === 'won') ||
+                        (match.team2.name === 'Mighty Strikers' && match.team2.result === 'won')
                     ).length
                   }
                 </div>
@@ -483,13 +497,10 @@ const MatchPage = () => {
               >
                 <div className="text-4xl font-bold text-red-500">
                   {
-                    matches.filter(
+                    completedMatches.filter(
                       (match) =>
-                        match.status === 'completed' &&
-                        ((match.team1.name === 'Mighty Strikers' &&
-                          match.team1.result === 'lost') ||
-                          (match.team2.name === 'Mighty Strikers' &&
-                            match.team2.result === 'lost'))
+                        (match.team1.name === 'Mighty Strikers' && match.team1.result === 'lost') ||
+                        (match.team2.name === 'Mighty Strikers' && match.team2.result === 'lost')
                     ).length
                   }
                 </div>
@@ -501,19 +512,16 @@ const MatchPage = () => {
                 transition={{ type: 'spring', stiffness: 300 }}
               >
                 <div className="text-4xl font-bold text-[#D4AF37]">
-                  {matches.length > 0
+                  {completedMatches.length > 0
                     ? Math.round(
-                        (matches.filter(
-                          (match) =>
-                            match.status === 'completed' &&
-                            ((match.team1.name === 'Mighty Strikers' &&
-                              match.team1.result === 'won') ||
-                              (match.team2.name === 'Mighty Strikers' &&
-                                match.team2.result === 'won'))
-                        ).length /
-                          matches.filter((match) => match.status === 'completed').length) *
-                          100
-                      ) + '%'
+                      (completedMatches.filter(
+                        (match) =>
+                          (match.team1.name === 'Mighty Strikers' && match.team1.result === 'won') ||
+                          (match.team2.name === 'Mighty Strikers' && match.team2.result === 'won')
+                      ).length /
+                        completedMatches.length) *
+                      100
+                    ) + '%'
                     : '0%'}
                 </div>
                 <div className="text-gray-400 mt-2">Win Percentage</div>
@@ -613,7 +621,7 @@ const MatchPage = () => {
                       selectedMatch
                     ).replace('border-', 'text-')}`}
                   >
-                    Mighty Strikers {getResultText(selectedMatch)}
+                    {selectedMatch.result}
                   </div>
                 )}
 
@@ -635,7 +643,15 @@ const MatchPage = () => {
                     <ul className="list-disc list-inside text-sm">
                       {selectedMatch.selectedPlayersData.map((player, index) => (
                         <li key={index}>
-                          {player.name} (@{player.username})
+                          {player.name} (
+                          <a
+                            href={`/player/${player.username}`}
+                            className="text-[#D4AF37] hover:underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            @{player.username}
+                          </a>
+                          )
                         </li>
                       ))}
                     </ul>
