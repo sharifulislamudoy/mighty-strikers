@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Mighty Strikers Cricket Club - Where Passion Meets Power!",
+  title: "Mighty Strikers",
   description: "Join Mighty Strikers Cricket Club for competitive matches, and youth development programs. Elevate your cricket skills with our expert trainers and state-of-the-art facilities.",
   keywords: "cricket club, cricket training, cricket matches, youth cricket, cricket coaching, cricket academy, friendly match, Mighty Strikers",
   authors: [{ name: "Mighty Strikers Cricket Club" }],
@@ -35,7 +35,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mighty Strikers Cricket Club - Where Passion Meets Power!",
+    title: "Mighty Strikers",
     description: "Join Mighty Strikers Cricket Club for professional coaching and competitive matches.",
     images: ["/logo.png"],
   },
