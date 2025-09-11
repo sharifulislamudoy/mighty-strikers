@@ -9,6 +9,8 @@ import { useSession } from 'next-auth/react';
 import NewMatchModal from '@/Components/NewMatchModal';
 import PublishResultModal from '@/Components/PublishResultModal';
 
+
+
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -797,7 +799,7 @@ const AdminDashboard = () => {
                             <div className="text-gray-400">Pending Approvals</div>
                           </div>
                           <div className="bg-[#0A0A0A] p-4 rounded-lg text-center">
-                            <div className="text-3xl font-bold text-[#D4AF37]">{matches.length}</div>
+                            <div className="text-3xl font-bold text-[#D4AF37]">{matches.filter((match) => match.status === 'scheduled').length}</div>
                             <div className="text-gray-400">Scheduled Matches</div>
                           </div>
                           <div className="bg-[#0A0A0A] p-4 rounded-lg text-center">
@@ -811,18 +813,21 @@ const AdminDashboard = () => {
                           <div>
                             <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Upcoming Matches</h3>
                             <div className="space-y-3">
-                              {matches.slice(0, 3).map((match) => (
-                                <div key={match.id || match._id} className="bg-[#0A0A0A] p-3 rounded-lg">
-                                  <div className="flex justify-between items-center">
-                                    <span className="font-bold">Vs {match.team2.name}</span>
-                                    <span className="text-sm text-gray-400">{match.date}</span>
+                              {matches
+                                .filter((match) => match.status === 'scheduled')
+                                .slice(0, 3)
+                                .map((match) => (
+                                  <div key={match.id || match._id} className="bg-[#0A0A0A] p-3 rounded-lg">
+                                    <div className="flex justify-between items-center">
+                                      <span className="font-bold">Vs {match.team2.name}</span>
+                                      <span className="text-sm text-gray-400">{match.date}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-400">
+                                      {match.venue} • {match.time}
+                                    </p>
                                   </div>
-                                  <p className="text-sm text-gray-400">
-                                    {match.venue} • {match.time}
-                                  </p>
-                                </div>
-                              ))}
-                              {matches.length === 0 && (
+                                ))}
+                              {matches.filter((match) => match.status === 'scheduled').length === 0 && (
                                 <div className="text-center py-4 text-gray-400">
                                   No upcoming matches
                                 </div>

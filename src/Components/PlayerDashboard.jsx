@@ -11,7 +11,7 @@ const toastVariants = {
     exit: { opacity: 0, y: -50 }
 };
 
-// Animation variants (existing code)
+// Animation variants
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -64,16 +64,12 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
     const [isUpdatingAge, setIsUpdatingAge] = useState(false);
-
-    // Add state for toast notifications
     const [toasts, setToasts] = useState([]);
 
     useEffect(() => {
-        // Simulate loading
         const timer = setTimeout(() => {
             setIsLoading(false);
         }, 500);
-
         return () => clearTimeout(timer);
     }, []);
 
@@ -85,77 +81,16 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         setCurrentPlayerDetails(playerDetails);
     }, [playerDetails]);
 
-    // Function to add a new toast
     const addToast = (message, type = 'success') => {
         const id = Date.now();
         setToasts(prev => [...prev, { id, message, type }]);
-
-        // Auto remove after 3 seconds
         setTimeout(() => {
             removeToast(id);
         }, 3000);
     };
 
-    // Function to remove a toast
     const removeToast = (id) => {
         setToasts(prev => prev.filter(toast => toast.id !== id));
-    };
-
-    const handleIncrement = (stat, isBatting = true) => {
-        if (!isEditing) return;
-
-        setCurrentPlayerDetails(prev => {
-            let updatedDetails = { ...prev };
-
-            if (isBatting) {
-                switch (stat) {
-                    case 'matches':
-                        updatedDetails.matches += 1;
-                        // Auto-calculate average only if matches > 0
-                        updatedDetails.average = updatedDetails.matches > 0
-                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
-                            : 0;
-                        break;
-                    case 'runs':
-                        updatedDetails.runs += 1;
-                        // Auto-calculate average only if matches > 0
-                        updatedDetails.average = updatedDetails.matches > 0
-                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
-                            : 0;
-                        break;
-                    case 'halfCenturies':
-                        updatedDetails.halfCenturies += 1;
-                        break;
-                    case 'centuries':
-                        updatedDetails.centuries += 1;
-                        break;
-                    case 'thirties':
-                        updatedDetails.thirties += 1;
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                switch (stat) {
-                    case 'wickets':
-                        updatedDetails.wickets += 1;
-                        break;
-                    case 'threeWickets':
-                        updatedDetails.threeWickets += 1;
-                        break;
-                    case 'fiveWickets':
-                        updatedDetails.fiveWickets += 1;
-                        break;
-                    case 'maidens':
-                        updatedDetails.maidens += 1;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            return updatedDetails;
-        });
     };
 
     const handleInputChange = (field, value, isBatting = true) => {
@@ -166,22 +101,55 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
 
             if (isBatting) {
                 switch (field) {
+                    case 'matches':
+                        updatedDetails.matches = parseInt(value) || 0;
+                        updatedDetails.average = updatedDetails.matches > 0
+                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
+                            : 0;
+                        break;
+                    case 'runs':
+                        updatedDetails.runs = parseInt(value) || 0;
+                        updatedDetails.average = updatedDetails.matches > 0
+                            ? parseFloat((updatedDetails.runs / updatedDetails.matches).toFixed(2))
+                            : 0;
+                        break;
                     case 'strikeRate':
                         updatedDetails.strikeRate = parseFloat(value) || 0;
                         break;
                     case 'bestBatting':
                         updatedDetails.bestBatting = value;
                         break;
+                    case 'halfCenturies':
+                        updatedDetails.halfCenturies = parseInt(value) || 0;
+                        break;
+                    case 'centuries':
+                        updatedDetails.centuries = parseInt(value) || 0;
+                        break;
+                    case 'thirties':
+                        updatedDetails.thirties = parseInt(value) || 0;
+                        break;
                     default:
                         break;
                 }
             } else {
                 switch (field) {
+                    case 'wickets':
+                        updatedDetails.wickets = parseInt(value) || 0;
+                        break;
                     case 'economy':
                         updatedDetails.economy = parseFloat(value) || 0;
                         break;
                     case 'bestBowling':
                         updatedDetails.bestBowling = value;
+                        break;
+                    case 'threeWickets':
+                        updatedDetails.threeWickets = parseInt(value) || 0;
+                        break;
+                    case 'fiveWickets':
+                        updatedDetails.fiveWickets = parseInt(value) || 0;
+                        break;
+                    case 'maidens':
+                        updatedDetails.maidens = parseInt(value) || 0;
                         break;
                     default:
                         break;
@@ -200,15 +168,10 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         if (confirm) {
             setIsSaving(true);
             const success = await onSaveDetails(currentPlayerDetails);
-
             if (success) {
-                // Refresh the data from the parent component
-                // The parent should handle the data refresh
                 setIsEditing(false);
-                // Show success toast instead of alert
                 addToast('Stats saved successfully!', 'success');
             } else {
-                // Show error toast instead of alert
                 addToast('Failed to save changes. Please try again.', 'error');
             }
             setIsSaving(false);
@@ -232,13 +195,11 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Check if file is an image
         if (!file.type.startsWith('image/')) {
             setImageError('Please select an image file');
             return;
         }
 
-        // Check file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setImageError('File size must be less than 5MB');
             return;
@@ -247,7 +208,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         setSelectedFile(file);
         setImageError('');
 
-        // Create preview
         const reader = new FileReader();
         reader.onload = (e) => {
             setFilePreview(e.target.result);
@@ -341,22 +301,13 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         setImageError('');
 
         try {
-            // 1. Upload image to Cloudinary
             const imageUrl = await uploadImageToCloudinary(selectedFile);
-
-            // 2. Update player's image in database
             await updatePlayerImage(imageUrl);
-
-            // 3. Add to gallery collection
             await addToGallery(imageUrl);
-
-            // 4. Update local state
             setCurrentPlayer(prev => ({ ...prev, image: imageUrl }));
             setShowImageUpload(false);
             setSelectedFile(null);
             setFilePreview(null);
-
-            // 5. Show success message
             addToast('Image updated successfully!', 'success');
         } catch (error) {
             console.error("Image change error:", error);
@@ -407,14 +358,9 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
         setAgeError('');
 
         try {
-            // Update age in database
             await updatePlayerAgeInDatabase(ageNum);
-
-            // Update local state
             setCurrentPlayer(prev => ({ ...prev, age: ageNum }));
             setTempAge('');
-
-            // Show success toast
             addToast('Age updated successfully!', 'success');
         } catch (error) {
             console.error("Age change error:", error);
@@ -439,7 +385,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-black to-[#0A0A0A] text-white overflow-hidden">
-            {/* Toast Container */}
             <div className="fixed top-4 right-4 z-50 space-y-2">
                 {toasts.map(toast => (
                     <motion.div
@@ -467,7 +412,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 ))}
             </div>
             <div className='w-11/12 mx-auto mt-15 md:px-4'>
-                {/* Animated Background Elements */}
                 <div className="fixed inset-0 z-0 overflow-hidden">
                     {[...Array(15)].map((_, i) => (
                         <motion.div
@@ -492,7 +436,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 </div>
 
                 <div className="container mx-auto px-4 py-8 relative z-10">
-                    {/* Header */}
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -509,7 +452,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                         </div>
                     </motion.div>
 
-                    {/* Edit/Save buttons */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -542,14 +484,12 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                         )}
                     </motion.div>
 
-                    {/* Player Summary Card */}
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
                         className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
                     >
-                        {/* Player Profile Card */}
                         <motion.div
                             variants={itemVariants}
                             className="lg:col-span-1 bg-gradient-to-b from-[#1a1a1a] to-black rounded-2xl border border-[#2a2a2a] shadow-lg overflow-hidden"
@@ -567,7 +507,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                     <h2 className="text-2xl font-bold">{currentPlayer.name}</h2>
                                     <p className="text-[#D4AF37]">{currentPlayer.category}</p>
                                 </div>
-                                {/* Image Change Button */}
                                 <div className="absolute top-4 right-4">
                                     <button
                                         onClick={handleImageChange}
@@ -606,7 +545,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                     </div>
                                 </div>
 
-                                {/* CrickHeroes Profile Link */}
                                 {currentPlayer.profileUrl && (
                                     <div className="mb-4">
                                         <h3 className="text-[#D4AF37] font-bold mb-2">CrickHeroes Profile</h3>
@@ -641,7 +579,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                     </div>
                                 </div>
 
-                                {/* Moved Playing Style to bottom */}
                                 <div>
                                     <h3 className="text-[#D4AF37] font-bold mb-2">Playing Style</h3>
                                     <div className="flex justify-between">
@@ -658,9 +595,7 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                             </div>
                         </motion.div>
 
-                        {/* Stats Overview */}
                         <div className="lg:col-span-2">
-                            {/* Tabs Navigation */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -675,240 +610,251 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 </button>
                             </motion.div>
 
-                            {/* Tab Content */}
-                            <div className="w-full relative">
-                                {/* Overview Tab */}
-                                <motion.div
-                                    className={activeTab !== 'overview' ? 'hidden' : ''}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={activeTab === 'overview' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        {/* Batting Stats */}
-                                        <motion.div
-                                            variants={statItemVariants}
-                                            className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg relative"
-                                            whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
-                                        >
-                                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Batting Statistics</h3>
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Matches</span>
-                                                    <div className="flex items-center gap-2">
+                            <motion.div
+                                className={activeTab !== 'overview' ? 'hidden' : ''}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={activeTab === 'overview' ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <motion.div
+                                        variants={statItemVariants}
+                                        className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg relative"
+                                        whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
+                                    >
+                                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Batting Statistics</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Matches</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.matches || 0}
+                                                            onChange={(e) => handleInputChange('matches', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
                                                         <span className="font-bold text-lg">{currentPlayerDetails.matches || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('matches')}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Runs</span>
-                                                    <div className="flex items-center gap-2">
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Runs</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.runs || 0}
+                                                            onChange={(e) => handleInputChange('runs', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
                                                         <span className="font-bold text-lg">{currentPlayerDetails.runs || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('runs')}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Average</span>
-                                                    <span className="font-bold text-lg">{currentPlayerDetails.average || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Average</span>
+                                                <span className="font-bold text-lg">{currentPlayerDetails.average || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Strike Rate</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.strikeRate || 0}
+                                                            onChange={(e) => handleInputChange('strikeRate', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            step="0.1"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.strikeRate || 0}</span>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Strike Rate</span>
-                                                    <div className="flex items-center gap-2">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="number"
-                                                                value={currentPlayerDetails.strikeRate || 0}
-                                                                onChange={(e) => handleInputChange('strikeRate', e.target.value)}
-                                                                className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
-                                                                step="0.1"
-                                                            />
-                                                        ) : (
-                                                            <span className="font-bold text-lg">{currentPlayerDetails.strikeRate || 0}</span>
-                                                        )}
-                                                    </div>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Best Batting</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={currentPlayerDetails.bestBatting || '0 (0)'}
+                                                            onChange={(e) => handleInputChange('bestBatting', e.target.value)}
+                                                            className="w-32 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold">{currentPlayerDetails.bestBatting || '0 (0)'}</span>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Best Batting</span>
-                                                    <div className="flex items-center gap-2">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={currentPlayerDetails.bestBatting || '0 (0)'}
-                                                                onChange={(e) => handleInputChange('bestBatting', e.target.value)}
-                                                                className="w-32 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
-                                                            />
-                                                        ) : (
-                                                            <span className="font-bold">{currentPlayerDetails.bestBatting || '0 (0)'}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {/* New batting stats */}
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">50s</span>
-                                                    <div className="flex items-center gap-2">
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">50s</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.halfCenturies || 0}
+                                                            onChange={(e) => handleInputChange('halfCenturies', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
                                                         <span className="font-bold text-lg">{currentPlayerDetails.halfCenturies || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('halfCenturies')}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">100s</span>
-                                                    <div className="flex items-center gap-2">
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">100s</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.centuries || 0}
+                                                            onChange={(e) => handleInputChange('centuries', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
                                                         <span className="font-bold text-lg">{currentPlayerDetails.centuries || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('centuries')}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    )}
                                                 </div>
-                                                <div className="flex justify-between items-center py-2">
-                                                    <span className="text-gray-400">30s</span>
-                                                    <div className="flex items-center gap-2">
+                                            </div>
+                                            <div className="flex justify-between items-center py-2">
+                                                <span className="text-gray-400">30s</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.thirties || 0}
+                                                            onChange={(e) => handleInputChange('thirties', e.target.value)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
                                                         <span className="font-bold text-lg">{currentPlayerDetails.thirties || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('thirties')}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </motion.div>
+                                        </div>
+                                    </motion.div>
 
-                                        {/* Bowling Stats */}
-                                        <motion.div
-                                            variants={statItemVariants}
-                                            className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg"
-                                            whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
-                                        >
-                                            <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Bowling Statistics</h3>
-                                            <div className="space-y-4">
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Wickets</span>
-                                                    <div className="flex items-center gap-2">
+                                    <motion.div
+                                        variants={statItemVariants}
+                                        className="bg-gradient-to-b from-[#1a1a1a] to-black p-6 rounded-2xl border border-[#2a2a2a] shadow-lg"
+                                        whileHover={{ y: -5, boxShadow: "0 10px 25px rgba(212, 175, 55, 0.15)" }}
+                                    >
+                                        <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Bowling Statistics</h3>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Wickets</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.wickets || 0}
+                                                            onChange={(e) => handleInputChange('wickets', e.target.value, false)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
                                                         <span className="font-bold text-lg">{currentPlayerDetails.wickets || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('wickets', false)}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Economy</span>
-                                                    <div className="flex items-center gap-2">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="number"
-                                                                value={currentPlayerDetails.economy || 0}
-                                                                onChange={(e) => handleInputChange('economy', e.target.value, false)}
-                                                                className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
-                                                                step="0.1"
-                                                            />
-                                                        ) : (
-                                                            <span className="font-bold text-lg">{currentPlayerDetails.economy || 0}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">Best Bowling</span>
-                                                    <div className="flex items-center gap-2">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={currentPlayerDetails.bestBowling || '0/0'}
-                                                                onChange={(e) => handleInputChange('bestBowling', e.target.value, false)}
-                                                                className="w-24 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
-                                                            />
-                                                        ) : (
-                                                            <span className="font-bold text-lg">{currentPlayerDetails.bestBowling || '0/0'}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {/* New bowling stats */}
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">3 Wickets</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{currentPlayerDetails.threeWickets || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('threeWickets', false)}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
-                                                    <span className="text-gray-400">5 Wickets</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{currentPlayerDetails.fiveWickets || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('fiveWickets', false)}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex justify-between items-center py-2">
-                                                    <span className="text-gray-400">Maidens</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-lg">{currentPlayerDetails.maidens || 0}</span>
-                                                        {isEditing && (
-                                                            <button
-                                                                onClick={() => handleIncrement('maidens', false)}
-                                                                className="w-6 h-6 bg-[#D4AF37] text-black rounded-full flex items-center justify-center text-sm font-bold"
-                                                            >
-                                                                +
-                                                            </button>
-                                                        )}
-                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
-                                        </motion.div>
-                                    </div>
-                                </motion.div>
-                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Economy</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.economy || 0}
+                                                            onChange={(e) => handleInputChange('economy', e.target.value, false)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            step="0.1"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.economy || 0}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">Best Bowling</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={currentPlayerDetails.bestBowling || '0/0'}
+                                                            onChange={(e) => handleInputChange('bestBowling', e.target.value, false)}
+                                                            className="w-24 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.bestBowling || '0/0'}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">3 Wickets</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.threeWickets || 0}
+                                                            onChange={(e) => handleInputChange('threeWickets', e.target.value, false)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.threeWickets || 0}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                                <span className="text-gray-400">5 Wickets</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.fiveWickets || 0}
+                                                            onChange={(e) => handleInputChange('fiveWickets', e.target.value, false)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.fiveWickets || 0}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center py-2">
+                                                <span className="text-gray-400">Maidens</span>
+                                                <div className="flex items-center gap-2">
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="number"
+                                                            value={currentPlayerDetails.maidens || 0}
+                                                            onChange={(e) => handleInputChange('maidens', e.target.value, false)}
+                                                            className="w-20 bg-[#2a2a2a] border border-[#D4AF37] rounded-md px-2 py-1 text-white text-right"
+                                                            min="0"
+                                                        />
+                                                    ) : (
+                                                        <span className="font-bold text-lg">{currentPlayerDetails.maidens || 0}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                </div>
+                            </motion.div>
                         </div>
                     </motion.div>
                 </div>
             </div>
 
-            {/* Save Confirmation Modal */}
             {showSaveConfirm && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
                     <motion.div
@@ -937,7 +883,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 </div>
             )}
 
-            {/* Image Change Modal */}
             {showImageUpload && (
                 <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
                     <motion.div
@@ -946,7 +891,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                         className="bg-[#1A1A1A] p-6 rounded-2xl border border-[#D4AF37] w-full max-w-md"
                     >
                         <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Change Profile Image</h3>
-
                         {filePreview ? (
                             <div className="mb-4 flex justify-center">
                                 <img
@@ -974,8 +918,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 </div>
                             </div>
                         )}
-
-
                         <label className="block mb-4">
                             <div className="px-4 py-2 bg-[#2A2A2A] border border-[#D4AF37] rounded-lg text-center cursor-pointer hover:bg-[#3A3A3A] transition-colors text-[#D4AF37]">
                                 Select Image
@@ -987,11 +929,9 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                                 className="hidden"
                             />
                         </label>
-
                         {imageError && (
                             <div className="text-red-400 text-sm mb-4">{imageError}</div>
                         )}
-
                         <div className="flex justify-end space-x-3">
                             <button
                                 onClick={() => {
@@ -1025,8 +965,6 @@ const PlayerDashboard = ({ player, playerDetails, onSaveDetails }) => {
                 </div>
             )}
 
-
-            {/* Age Change Modal */}
             {tempAge && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
                     <motion.div
