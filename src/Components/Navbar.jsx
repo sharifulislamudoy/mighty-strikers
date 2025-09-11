@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut, useSession } from 'next-auth/react';
+import toast, { Toaster } from 'react-hot-toast'; // Import react-hot-toast
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,15 +63,41 @@ const Navbar = () => {
   };
 
   const confirmLogout = async () => {
-    await signOut({ redirect: false });
-    setShowLogoutConfirm(false);
+    try {
+      await signOut({ redirect: false });
+      setShowLogoutConfirm(false);
+      toast.success('Successfully signed out!', {
+        duration: 4000,
+        style: {
+          background: '#1A1A1A',
+          color: '#fff',
+          border: '1px solid #2A2A2A',
+        },
+        iconTheme: {
+          primary: '#f0c22c',
+          secondary: '#1A1A1A',
+        },
+      }); // Show toast on successful sign-out
+    } catch (error) {
+      toast.error('Failed to sign out. Please try again.', {
+        duration: 4000,
+        style: {
+          background: '#1A1A1A',
+          color: '#fff',
+          border: '1px solid #2A2A2A',
+        },
+        iconTheme: {
+          primary: '#ef4444',
+          secondary: '#1A1A1A',
+        },
+      });
+    }
   };
 
   const cancelLogout = () => {
     setShowLogoutConfirm(false);
   };
 
-  // Handle image selection for upload
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -95,7 +122,6 @@ const Navbar = () => {
     });
   };
 
-  // Remove selected image from upload
   const removeImage = (index) => {
     setUploadData(prev => ({
       ...prev,
@@ -104,10 +130,20 @@ const Navbar = () => {
     }));
   };
 
-  // Handle upload to Cloudinary and then to backend
   const handleUpload = async () => {
     if (uploadData.images.length === 0) {
-      alert('Please select at least one image');
+      toast.error('Please select at least one image', {
+        duration: 4000,
+        style: {
+          background: '#1A1A1A',
+          color: '#fff',
+          border: '1px solid #2A2A2A',
+        },
+        iconTheme: {
+          primary: '#ef4444',
+          secondary: '#1A1A1A',
+        },
+      });
       return;
     }
 
@@ -135,7 +171,18 @@ const Navbar = () => {
       });
 
       await Promise.all(uploadPromises);
-      alert('Images uploaded successfully!');
+      toast.success('Images uploaded successfully!', {
+        duration: 4000,
+        style: {
+          background: '#1A1A1A',
+          color: '#fff',
+          border: '1px solid #2A2A2A',
+        },
+        iconTheme: {
+          primary: '#f0c22c',
+          secondary: '#1A1A1A',
+        },
+      });
       setShowUploadModal(false);
       setUploadData({
         category: 'profile',
@@ -145,7 +192,18 @@ const Navbar = () => {
       });
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload images. Please try again.');
+      toast.error('Failed to upload images. Please try again.', {
+        duration: 4000,
+        style: {
+          background: '#1A1A1A',
+          color: '#fff',
+          border: '1px solid #2A2A2A',
+        },
+        iconTheme: {
+          primary: '#ef4444',
+          secondary: '#1A1A1A',
+        },
+      });
     } finally {
       setIsUploading(false);
     }
@@ -156,6 +214,7 @@ const Navbar = () => {
 
   return (
     <>
+      <Toaster /> {/* Add Toaster component for toast notifications */}
       <motion.nav 
         className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black py-2 shadow-lg' : 'bg-transparent py-4'}`}
         initial={{ y: -100 }}
@@ -163,7 +222,6 @@ const Navbar = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="container mx-auto w-11/12 px-4 md:px-6 flex justify-between items-center">
-          {/* Logo - Left Side */}
           <motion.div 
             className="flex items-center"
             whileHover={{ scale: 1.05 }}
@@ -177,7 +235,6 @@ const Navbar = () => {
             </Link>
           </motion.div>
 
-          {/* Navigation Items - Middle (Desktop) */}
           <div className="hidden lg:flex items-center space-x-8">
             {navItems.map((item, index) => (
               <motion.div
@@ -206,7 +263,6 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Right Side - User Icon or Join Button */}
           <div className="hidden lg:block">
             {isMounted && status === 'authenticated' ? (
               <div className="relative">
@@ -220,7 +276,6 @@ const Navbar = () => {
                   {session.user?.name?.charAt(0) || session.user?.username?.charAt(0) || 'U'}
                 </motion.button>
                 
-                {/* User Menu Drawer */}
                 <AnimatePresence>
                   {userMenuOpen && (
                     <motion.div
@@ -239,13 +294,12 @@ const Navbar = () => {
                         </p>
                       </div>
                       
-                      {/* Upload Button */}
                       <button
                         onClick={() => {
                           setUserMenuOpen(false);
                           setShowUploadModal(true);
                         }}
-                        className=" w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#2A2A2A] transition-colors flex items-center gap-2"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -253,7 +307,6 @@ const Navbar = () => {
                         Upload Image
                       </button>
                       
-                      {/* Admin Dashboard Link */}
                       {isAdmin && (
                         <Link
                           href="/player/dashboard/admin"
@@ -300,7 +353,6 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="lg:hidden">
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -326,7 +378,6 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -359,10 +410,8 @@ const Navbar = () => {
                     </motion.div>
                   ))}
                   
-                  {/* Mobile User Menu or Join Button */}
                   {status === 'authenticated' ? (
                     <>
-                      {/* Upload Button for Mobile */}
                       <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -373,7 +422,7 @@ const Navbar = () => {
                             setIsOpen(false);
                             setShowUploadModal(true);
                           }}
-                          className=" w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
+                          className="w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -382,7 +431,6 @@ const Navbar = () => {
                         </button>
                       </motion.div>
                       
-                      {/* Admin Dashboard Link for Mobile */}
                       {isAdmin && (
                         <motion.div
                           initial={{ opacity: 0, x: -20 }}
@@ -448,7 +496,6 @@ const Navbar = () => {
           )}
         </AnimatePresence>
 
-        {/* Overlay for user menu */}
         {userMenuOpen && (
           <div 
             className="fixed inset-0 z-40"
@@ -457,7 +504,6 @@ const Navbar = () => {
         )}
       </motion.nav>
 
-      {/* Logout Confirmation Modal */}
       <AnimatePresence>
         {showLogoutConfirm && (
           <>
@@ -498,7 +544,6 @@ const Navbar = () => {
         )}
       </AnimatePresence>
 
-      {/* Upload Modal */}
       <AnimatePresence>
         {showUploadModal && (
           <>
@@ -531,7 +576,6 @@ const Navbar = () => {
                   </div>
 
                   <div className="space-y-6">
-                    {/* Category Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Category
@@ -549,7 +593,6 @@ const Navbar = () => {
                       </select>
                     </div>
 
-                    {/* Title Input */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Title (for all images)
@@ -564,7 +607,6 @@ const Navbar = () => {
                       />
                     </div>
 
-                    {/* Image Upload */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         Select Images
@@ -590,7 +632,6 @@ const Navbar = () => {
                       </div>
                     </div>
 
-                    {/* Image Previews */}
                     {uploadData.previews.length > 0 && (
                       <div>
                         <h3 className="text-sm font-medium text-gray-300 mb-3">Selected Images ({uploadData.previews.length})</h3>
@@ -618,7 +659,6 @@ const Navbar = () => {
                       </div>
                     )}
 
-                    {/* Upload Button */}
                     <button
                       onClick={handleUpload}
                       disabled={isUploading || uploadData.images.length === 0}
