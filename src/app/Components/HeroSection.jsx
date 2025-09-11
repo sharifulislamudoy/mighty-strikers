@@ -194,7 +194,7 @@ const HeroSection = () => {
 
                         <motion.div
                             variants={itemVariants}
-                            className="flex  gap-4 justify-center lg:justify-start"
+                            className="flex flex-col lg:flex-row  gap-4 justify-center lg:justify-start"
                         >
                             <motion.button
                                 onClick={handleTeamNavigation}
