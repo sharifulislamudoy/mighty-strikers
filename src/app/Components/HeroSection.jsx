@@ -24,7 +24,6 @@ const HeroSection = () => {
                 }
             } catch (error) {
                 console.error('Failed to fetch players count:', error);
-                // Keep the default value if fetch fails
             }
         };
         
@@ -170,9 +169,9 @@ const HeroSection = () => {
                             transition={{ duration: 0.7, delay: 0.2 }}
                         >
                             <Image
-                                src="/logo.png" // আপনার লোগোর পাথ
+                                src="/logo.png"
                                 alt="Mighty Strikers Logo"
-                                width={80} // লোগোর সাইজ
+                                width={80} 
                                 height={80}
                                 className="rounded-full border-4 border-[#D4AF37] shadow-lg"
                             />
@@ -226,7 +225,7 @@ const HeroSection = () => {
                             </div>
 
                             <div className="text-center">
-                                <div className="text-3xl font-bold text-[#D4AF37]">5</div>
+                                <div className="text-3xl font-bold text-[#D4AF37]">0</div>
                                 <div className="text-white">Tournaments</div>
                             </div>
 

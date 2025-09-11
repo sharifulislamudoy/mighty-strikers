@@ -42,6 +42,7 @@ const Navbar = () => {
     { name: 'Team', path: '/team' },
     { name: 'Matches', path: '/matches' },
     { name: 'Gallery', path: '/gallery' },
+    { name: 'Performance', path: '/performance' },
   ];
 
   const isAuthForm = pathname === '/auth-form';
