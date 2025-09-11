@@ -552,6 +552,10 @@ const StatsTab = ({ playerDetails }) => {
                                 <span className="font-bold text-lg">{playerDetails.matches || 0}</span>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                <span className="text-gray-400">Innings</span>
+                                <span className="font-bold text-lg">{playerDetails.innings || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                 <span className="text-gray-400">Runs</span>
                                 <span className="font-bold text-lg">{playerDetails.runs || 0}</span>
                             </div>
@@ -583,6 +587,10 @@ const StatsTab = ({ playerDetails }) => {
                     >
                         <h3 className="text-xl font-bold mb-4 text-[#D4AF37]">Bowling Stats</h3>
                         <div className="space-y-4">
+                            <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
+                                <span className="text-gray-400">Innings</span>
+                                <span className="font-bold text-lg">{playerDetails.bowlingInnings || 0}</span>
+                            </div>
                             <div className="flex justify-between items-center py-2 border-b border-[#2a2a2a]">
                                 <span className="text-gray-400">Wickets</span>
                                 <span className="font-bold text-lg">{playerDetails.wickets || 0}</span>
