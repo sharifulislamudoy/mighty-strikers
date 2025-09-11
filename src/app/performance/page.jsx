@@ -236,7 +236,7 @@ const PerformancePage = () => {
                                   <th className="text-left py-3">Rank</th>
                                   <th className="text-left py-3">Player</th>
                                   <th className="text-left py-3">Category</th>
-                                  <th className="text-left py-3">Matches</th>
+                                  <th className="text-left py-3">Innings</th>
                                   <th className="text-left py-3">Runs</th>
                                   <th className="text-left py-3">Average</th>
                                   <th className="text-left py-3">Highest</th>
@@ -287,7 +287,7 @@ const PerformancePage = () => {
                                         </Link>
                                       </td>
                                       <td className="py-3 capitalize">{stat.category}</td>
-                                      <td className="py-3">{stat.matches}</td>
+                                      <td className="py-3">{stat.innings}</td>
                                       <td className="py-3 font-medium text-[#D4AF37]">{stat.runs}</td>
                                       <td className="py-3">{stat.average.toFixed(1)}</td>
                                       <td className="py-3">{formatBestBatting(stat.bestBatting)}</td>
@@ -344,7 +344,7 @@ const PerformancePage = () => {
                                         <h3 className="font-bold text-[#D4AF37]">{stat.name}</h3>
                                       </Link>
                                     </div>
-                                    <span className="text-sm text-gray-400">{stat.matches} matches</span>
+                                    <span className="text-sm text-gray-400">{stat.innings} innings</span>
                                   </div>
                                   <div className="grid grid-cols-2 gap-3 text-sm">
                                     <div>
@@ -428,7 +428,7 @@ const PerformancePage = () => {
                                   <th className="text-left py-3">Rank</th>
                                   <th className="text-left py-3">Player</th>
                                   <th className="text-left py-3">Category</th>
-                                  <th className="text-left py-3">Matches</th>
+                                  <th className="text-left py-3">Innings</th>
                                   <th className="text-left py-3">Wickets</th>
                                   <th className="text-left py-3">Economy</th>
                                   <th className="text-left py-3">Best Bowling</th>
@@ -479,7 +479,7 @@ const PerformancePage = () => {
                                         </Link>
                                       </td>
                                       <td className="py-3 capitalize">{stat.category}</td>
-                                      <td className="py-3">{stat.matches}</td>
+                                      <td className="py-3">{stat.bowlingInnings}</td>
                                       <td className="py-3 font-medium text-[#D4AF37]">{stat.wickets}</td>
                                       <td className="py-3">{stat.economy.toFixed(1)}</td>
                                       <td className="py-3">{formatBestBowling(stat.bestBowling)}</td>
@@ -536,7 +536,7 @@ const PerformancePage = () => {
                                         <h3 className="font-bold text-[#D4AF37]">{stat.name}</h3>
                                       </Link>
                                     </div>
-                                    <span className="text-sm text-gray-400">{stat.matches} matches</span>
+                                    <span className="text-sm text-gray-400">{stat.bowlingInnings} Innings</span>
                                   </div>
                                   <div className="grid grid-cols-2 gap-3 text-sm">
                                     <div>
