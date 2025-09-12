@@ -27,7 +27,7 @@ export const metadata = {
     siteName: "Mighty Strikers",
     images: [
       {
-        url: "https://res.cloudinary.com/dohhfubsa/image/upload/v1757486830/file_00000000cdf051f7a0188f4f67246467_cluct7.png",
+        url: "/favicon.ico",
         width: 1200,
         height: 630,
         alt: "Mighty Strikers",
@@ -42,7 +42,7 @@ export const metadata = {
     description:
       "Follow Mighty Strikers for match updates, live scores, and professional cricket training.",
     images: [
-      "https://res.cloudinary.com/dohhfubsa/image/upload/v1757486830/file_00000000cdf051f7a0188f4f67246467_cluct7.png",
+      "/favicon.ico",
     ],
   },
   robots: {
@@ -65,7 +65,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/logo.png" />
+        <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#1a472a" />
         <meta
