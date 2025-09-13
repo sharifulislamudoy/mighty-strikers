@@ -630,9 +630,6 @@ const MatchPage = () => {
                     <div className="text-lg font-semibold text-[#D4AF37] mb-4">
                       Upcoming Match
                     </div>
-                    <button className="bg-[#D4AF37] text-black font-bold py-2 px-6 rounded-full">
-                      Set Reminder
-                    </button>
                   </div>
                 )}
 
