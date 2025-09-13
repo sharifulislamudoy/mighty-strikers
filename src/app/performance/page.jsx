@@ -84,8 +84,8 @@ const PerformancePage = () => {
 
   // Navigation tabs
   const navTabs = [
-    { id: 'batting', label: 'Batting Rankings', icon: '🏏' },
-    { id: 'bowling', label: 'Bowling Rankings', icon: '🎯' },
+    { id: 'batting', label: 'Batting', icon: '🏏' },
+    { id: 'bowling', label: 'Bowling', icon: '🎯' },
   ];
 
   return (
