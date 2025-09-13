@@ -351,6 +351,7 @@ const MatchPage = () => {
                         <div className="text-center w-1/3">
                           <div className="text-xl font-bold text-[#D4AF37]">VS</div>
                           <div className="text-xs text-gray-400 mt-1">{match.time}</div>
+                          <div className="text-xs text-gray-400 mt-1">{match.overs} Overs</div>
                         </div>
 
                         <div className="flex flex-col items-center w-1/3">

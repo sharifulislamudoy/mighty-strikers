@@ -220,7 +220,7 @@ const HeroSection = () => {
                             className="mt-8 flex items-center justify-center lg:justify-start space-x-8"
                         >
                             <div className="text-center">
-                                <div className="text-3xl font-bold text-[#D4AF37]">24</div>
+                                <div className="text-3xl font-bold text-[#D4AF37]">17</div>
                                 <div className="text-white">Matches Won</div>
                             </div>
 
