@@ -39,11 +39,11 @@ const Navbar = () => {
   }, []);
 
   const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Team', path: '/team' },
-    { name: 'Matches', path: '/matches' },
-    { name: 'Gallery', path: '/gallery' },
-    { name: 'Performance', path: '/performance' },
+    { name: 'Home', path: '/', icon: '🏠' },
+    { name: 'Team', path: '/team', icon: '👥' },
+    { name: 'Matches', path: '/matches', icon: '🏏' },
+    { name: 'Gallery', path: '/gallery', icon: '🖼️' },
+    { name: 'Performance', path: '/performance', icon: '📊' },
   ];
 
   const isAuthForm = pathname === '/auth-form';
@@ -215,8 +215,10 @@ const Navbar = () => {
   return (
     <>
       <Toaster /> {/* Add Toaster component for toast notifications */}
+      
+      {/* Large Device Navbar - Fixed Top */}
       <motion.nav 
-        className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black py-2 shadow-lg' : 'bg-transparent py-4'}`}
+        className={`hidden lg:block fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black py-2 shadow-lg' : 'bg-transparent py-4'}`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -235,7 +237,7 @@ const Navbar = () => {
             </Link>
           </motion.div>
 
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="flex items-center space-x-8">
             {navItems.map((item, index) => (
               <motion.div
                 key={item.name}
@@ -263,7 +265,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          <div className="hidden lg:block">
+          <div className="block">
             {isMounted && status === 'authenticated' ? (
               <div className="relative">
                 <motion.button
@@ -352,149 +354,7 @@ const Navbar = () => {
               <div className="w-32 h-10"></div>
             )}
           </div>
-
-          <div className="lg:hidden">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={toggleMenu}
-              className="text-white focus:outline-none"
-              aria-label="Toggle menu"
-            >
-              <div className="w-6 h-6 flex flex-col justify-between items-center">
-                <motion.span
-                  animate={isOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
-                  className="w-full h-0.5 bg-[#f0c22c] block"
-                ></motion.span>
-                <motion.span
-                  animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
-                  className="w-full h-0.5 bg-[#f0c22c] block"
-                ></motion.span>
-                <motion.span
-                  animate={isOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-                  className="w-full h-0.5 bg-[#f0c22c] block"
-                ></motion.span>
-              </div>
-            </motion.button>
-          </div>
         </div>
-
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-              className="lg:hidden bg-black border-t border-[#f0c22c] overflow-hidden"
-            >
-              <div className="container mx-auto px-4 py-4">
-                <div className="flex flex-col space-y-4">
-                  {navItems.map((item, index) => (
-                    <motion.div
-                      key={item.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                    >
-                      <Link
-                        href={item.path}
-                        onClick={() => setIsOpen(false)}
-                        className={`block py-3 text-lg font-medium ${
-                          pathname === item.path
-                            ? 'text-[#f0c22c]'
-                            : 'text-white hover:text-[#f0c22c]'
-                        }`}
-                      >
-                        {item.name}
-                      </Link>
-                    </motion.div>
-                  ))}
-                  
-                  {status === 'authenticated' ? (
-                    <>
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
-                      >
-                        <button
-                          onClick={() => {
-                            setIsOpen(false);
-                            setShowUploadModal(true);
-                          }}
-                          className="w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                          </svg>
-                          Upload Image
-                        </button>
-                      </motion.div>
-                      
-                      {isAdmin && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ duration: 0.3, delay: (navItems.length + 1) * 0.1 }}
-                        >
-                          <Link
-                            href="/player/dashboard/admin"
-                            onClick={() => setIsOpen(false)}
-                            className="block py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
-                          >
-                            Admin Dashboard
-                          </Link>
-                        </motion.div>
-                      )}
-                      
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 2 : 1)) * 0.1 }}
-                      >
-                        <Link
-                          href={`/player/dashboard/${username}`}
-                          onClick={() => setIsOpen(false)}
-                          className="block py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
-                        >
-                          Dashboard
-                        </Link>
-                      </motion.div>
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: (navItems.length + (isAdmin ? 3 : 2)) * 0.1 }}
-                      >
-                        <button
-                          onClick={handleLogoutClick}
-                          className="block w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c]"
-                        >
-                          Sign Out
-                        </button>
-                      </motion.div>
-                    </>
-                  ) : isMounted && !isAuthForm ? (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: navItems.length * 0.1 }}
-                      className="pt-4"
-                    >
-                      <a
-                        href='/auth-form'
-                        className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg"
-                      >
-                        Join Our Team
-                      </a>
-                    </motion.div>
-                  ) : (
-                    <div className="h-16"></div> 
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {userMenuOpen && (
           <div 
@@ -503,6 +363,186 @@ const Navbar = () => {
           />
         )}
       </motion.nav>
+
+      {/* Small Device - Top Bar with Shortname/Icon + Bottom Navigation */}
+      <div className="lg:hidden">
+        {/* Top Bar */}
+        <div className={`fixed w-full z-50 top-0 transition-all duration-300 ${scrolled ? 'bg-black py-2 shadow-lg' : 'bg-black py-4'}`}>
+          <div className="container mx-auto w-11/12 px-4 md:px-6 flex justify-between items-center">
+            <motion.div 
+              className="flex items-center"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link href="/" className="flex items-center">
+                <div className="text-xl font-bold bg-black p-2 rounded-lg">
+                  <span className="text-white">Mighty</span>
+                  <span className="text-[#f0c22c]">Strikers</span>
+                </div>
+              </Link>
+            </motion.div>
+
+            {isMounted && status === 'authenticated' ? (
+              <div className="relative">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={toggleMenu}
+                  className="w-10 h-10 rounded-full bg-[#f0c22c] flex items-center justify-center text-black font-bold"
+                  aria-label="User menu"
+                >
+                  {session.user?.name?.charAt(0) || session.user?.username?.charAt(0) || 'U'}
+                </motion.button>
+              </div>
+            ) : isMounted && !isAuthForm ? (
+              <motion.a
+                whileHover={{ 
+                  scale: 1.05,
+                  backgroundColor: "#f0c22c",
+                  color: "#000"
+                }}
+                href='/auth-form'
+                whileTap={{ scale: 0.95 }}
+                className="bg-[#f0c22c] text-black font-bold py-2 px-6 rounded-full text-sm transition-all duration-300 border border-[#D4AF37] shadow-lg"
+              >
+                Join Our Team
+              </motion.a>
+            ) : (
+              <div className="w-32 h-10"></div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Navigation - Sticky */}
+        <motion.nav 
+          className="fixed bottom-0 w-full z-40 bg-black border-t border-[#2A2A2A] lg:hidden"
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <div className="flex justify-around items-center py-2 px-4">
+            {navItems.map((item, index) => (
+              <motion.div
+                key={item.name}
+                className="flex flex-col items-center space-y-1 flex-1"
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  href={item.path}
+                  className={`text-lg transition-colors duration-300 ${
+                    pathname === item.path 
+                      ? 'text-[#f0c22c]' 
+                      : 'text-white hover:text-[#F1E5AC]'
+                  }`}
+                >
+                  <span>{item.icon}</span>
+                </Link>
+                <span className={`text-xs font-medium ${
+                  pathname === item.path 
+                    ? 'text-[#f0c22c]' 
+                    : 'text-gray-400'
+                }`}>
+                  {item.name}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.nav>
+
+        {/* Top spacing for bottom nav */}
+        <div className="pb-16 lg:pb-0"></div>
+      </div>
+
+      {/* Mobile Drawer Menu */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ duration: 0.3 }}
+            className="fixed right-0 top-0 h-full w-80 bg-black border-l border-[#2A2A2A] z-50 lg:hidden"
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-white">Menu</h2>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {status === 'authenticated' ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowUploadModal(true);
+                      }}
+                      className="w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      Upload Image
+                    </button>
+                    
+                    {isAdmin && (
+                      <Link
+                        href="/player/dashboard/admin"
+                        onClick={() => setIsOpen(false)}
+                        className="py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                        </svg>
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    
+                    <Link
+                      href={`/player/dashboard/${username}`}
+                      onClick={() => setIsOpen(false)}
+                      className=" py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Dashboard
+                    </Link>
+                    
+                    <button
+                      onClick={handleLogoutClick}
+                      className=" w-full text-left py-3 text-lg font-medium text-white hover:text-[#f0c22c] flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <motion.div
+                    className="pt-4"
+                  >
+                    <a
+                      href='/auth-form'
+                      className="w-full bg-[#f0c22c] text-black font-bold py-3 px-6 rounded-full text-lg block text-center"
+                    >
+                      Join Our Team
+                    </a>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showLogoutConfirm && (

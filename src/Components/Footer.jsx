@@ -65,7 +65,7 @@ const Footer = () => {
         <>
             {/* Floating Message Button - Always Visible */}
             <motion.a
-                className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#D4AF37] rounded-full flex items-center justify-center shadow-lg"
+                className="fixed bottom-6 hidden right-6 z-50 w-14 h-14 bg-[#D4AF37] rounded-full lg:flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.1, backgroundColor: "#c19b2e" }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 20 }}
