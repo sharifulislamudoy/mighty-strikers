@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Mighty Strikers | Where Passion Meets Power!",
+  title: "Mighty Strikers",
   description:
     "Official Mighty Strikers Cricket Club website. Get live scores, player stats, match updates, and join our team",
   keywords:
     "Mighty Strikers, cricket club, cricket team, live scores, cricket stats, cricket coaching, youth cricket, cricket academy",
   authors: [{ name: "Mighty Strikers" }],
   openGraph: {
-    title: "Mighty Strikers | Where Passion Meets Power!",
+    title: "Where Passion Meets Power!",
     description:
       "Stay updated with Mighty Strikers. Live scores, player profiles, match highlights, and expert coaching for aspiring cricketers.",
     url: "https://mighty-strikers.vercel.app/",
@@ -38,7 +38,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mighty Strikers | Where Passion Meets Power!",
+    title: "Mighty Strikers",
     description:
       "Follow Mighty Strikers for match updates, live scores, and professional cricket training.",
     images: [
@@ -66,6 +66,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
+        <title>Mighty Strikers</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#1a472a" />
         <meta
