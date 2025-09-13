@@ -91,7 +91,7 @@ const HeroSection = () => {
     ];
 
     return (
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-black to-[#0A0A0A] pt-16">
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-black to-[#0A0A0A]">
             {/* Animated background elements */}
             <div className="absolute inset-0 z-0">
                 {/* Animated cricket field lines */}
